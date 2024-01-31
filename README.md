@@ -1,14 +1,12 @@
 <div align="center">
-<center>
-<img width=500px src="./assets/yolo_logo.png">
-</center>
+<img src="./assets/logo.png" width=60%>
 <br>
 <a href="https://scholar.google.com/citations?hl=zh-CN&user=PH8rJHYAAAAJ">Tianheng Cheng*</a><sup><span>2,3</span></sup>, 
 <a href="https://linsong.info/">Lin Song*</a><sup><span>1</span></sup>,
-<a href="">Yixiao Ge</a><sup><span>1,2</span></sup>,
-<a href="">Xinggang Wang</a><sup><span>3</span></sup>,
+<a href="https://yxgeee.github.io/">Yixiao Ge</a><sup><span>1,2</span></sup>,
+<a href="https://xwcv.github.io/">Xinggang Wang</a><sup><span>3</span></sup>,
 <a href="http://eic.hust.edu.cn/professor/liuwenyu/"> Wenyu Liu</a><sup><span>3</span></sup>,
-<a href="">Ying Shan</a><sup><span>1,2</span></sup>
+<a href="https://scholar.google.com/citations?user=4oXBp9UAAAAJ&hl=en">Ying Shan</a><sup><span>1,2</span></sup>
 </br>
 
 <sup>1</sup> Tencent AI Lab,  <sup>2</sup> ARC Lab, Tencent PCG
@@ -16,7 +14,7 @@
 <br>
 <div>
 
-[![arxiv paper](https://img.shields.io/badge/arXiv-Paper-red)](https://arxiv.org/abs/)
+[![arxiv paper](https://img.shields.io/badge/arXiv-Paper-red)]([https://arxiv.org/abs/](https://arxiv.org/abs/2401.17270))
 [![video](https://img.shields.io/badge/🤗HugginngFace-Spaces-orange)](https://huggingface.co/)
 [![license](https://img.shields.io/badge/License-GPLv3.0-blue)](LICENSE)
 
@@ -26,7 +24,7 @@
 
 ## Updates 
 
-`[2024-1-25]:` We are excited to launch **YOLO-World**, a cutting-edge real-time open-vocabulary object detector.
+`[2024-1-31]:` We are excited to launch **YOLO-World**, a cutting-edge real-time open-vocabulary object detector.
 
 ## Highlights
 
@@ -58,14 +56,17 @@ We've pre-trained YOLO-World-S/M/L from scratch and evaluate on the `LVIS val-1.
 
 ### Zero-shot Inference on LVIS dataset
 
-| model | Pre-train Data | AP | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | FPS(V100) | weights | log |
-| :---- | :------------- | :-:| :------------: |:-------------: | :-------: | :-----: | :---: | :---: |
-| [YOLO-World-S](./configs/pretrain/yolo_world_s_t2i_bn_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 17.6 | 11.9 | 14.5 | 23.2  | - | [wecom](https://drive.weixin.qq.com/s?k=AJEAIQdfAAoREsieRl) | [log]() |
-| [YOLO-World-M](./configs/pretrain/yolo_world_m_t2i_bn_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 23.5 | 17.2 | 20.4 | 29.6  | - | [wecom](https://drive.weixin.qq.com/s?k=AJEAIQdfAAoj0byBC0) | [log]() |
-| [YOLO-World-L](./configs/pretrain/yolo_world_l_t2i_bn_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 25.7 | 18.7 | 22.6 | 32.2 | - | [wecom](https://drive.weixin.qq.com/s?k=AJEAIQdfAAoK06oxO2) | [log]() |
+| model | Pre-train Data | AP | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | weights | log |
+| :---- | :------------- | :-:| :------------: |:-------------: | :-------: | :---: | :---: |
+| [YOLO-World-S]() | O365+GoldG | 26.2 | 19.1 | 23.6 | 29.8  | - | [coming soon] | [log]() |
+| [YOLO-World-M]() | O365+GoldG | 31.0 | 23.8 | 29.2 | 33.9  | - | [coming soon] | [log]() |
+| [YOLO-World-L]() | O365+GoldG | 35.0 | 27.1 | 32.8 | 38.3 | - | [coming soon]| [log]() |
 
 **NOTE:**
 1. The evaluation results are tested on LVIS minival in a zero-shot manner.
+
+
+### Finetuning on COCO dataset
 
 
 ## Getting started
@@ -132,7 +133,7 @@ If you find YOLO-World is useful in your research or applications, please consid
 @article{cheng2024yolow,
   title={YOLO-World: Real-Time Open-Vocabulary Object Detection},
   author={Cheng, Tianheng and Song, Lin and Ge, Yixiao and Liu, Wenyu and Wang, Xinggang and Shan, Ying},
-  journal={arXiv preprint arXiv:},
+  journal={arXiv preprint arXiv:2401.17270},
   year={2024}
 }
 ```
