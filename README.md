@@ -108,7 +108,7 @@ chmod +x tools/dist_train.sh
 ```
 **NOTE:** YOLO-World is pre-trained on 4 nodes with 8 GPUs per node (32 GPUs in total). For pre-training, the `node_rank` and `nnodes` for multi-node training should be specified. 
 
-Evalutating YOLO-World is also easy:
+Evaluating YOLO-World is also easy:
 
 ```bash
 chmod +x tools/dist_test.sh
