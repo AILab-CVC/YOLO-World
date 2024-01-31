@@ -14,7 +14,7 @@
 <br>
 <div>
 
-[![arxiv paper](https://img.shields.io/badge/arXiv-Paper-red)]([https://arxiv.org/abs/](https://arxiv.org/abs/2401.17270))
+[![arxiv paper](https://img.shields.io/badge/arXiv-Paper-red)](https://arxiv.org/abs/2401.17270)
 [![video](https://img.shields.io/badge/🤗HugginngFace-Spaces-orange)](https://huggingface.co/)
 [![license](https://img.shields.io/badge/License-GPLv3.0-blue)](LICENSE)
 
