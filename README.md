@@ -1,5 +1,5 @@
 <div align="center">
-<img src="./assets/logo.png" width=60%>
+<img src="./assets/yolo_logo.png" width=60%>
 <br>
 <a href="https://scholar.google.com/citations?hl=zh-CN&user=PH8rJHYAAAAJ">Tianheng Cheng*</a><sup><span>2,3</span></sup>, 
 <a href="https://linsong.info/">Lin Song*</a><sup><span>1</span></sup>,
