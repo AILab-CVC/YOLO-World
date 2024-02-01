@@ -15,7 +15,7 @@
 <div>
 
 [![arxiv paper](https://img.shields.io/badge/arXiv-Paper-red)](https://arxiv.org/abs/2401.17270)
-[![video](https://img.shields.io/badge/🤗HugginngFace-Spaces-orange)](https://huggingface.co/)
+[![video](https://img.shields.io/badge/🤗HugginngFace-Spaces-orange)](https://huggingface.co/spaces/stevengrove/YOLO-World)
 [![license](https://img.shields.io/badge/License-GPLv3.0-blue)](LICENSE)
 
 </div>
