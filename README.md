@@ -1,19 +1,22 @@
 <div align="center">
 <img src="./assets/yolo_logo.png" width=60%>
 <br>
-<a href="https://scholar.google.com/citations?hl=zh-CN&user=PH8rJHYAAAAJ">Tianheng Cheng*</a><sup><span>2,3</span></sup>, 
-<a href="https://linsong.info/">Lin Song*</a><sup><span>1</span></sup>,
-<a href="https://yxgeee.github.io/">Yixiao Ge</a><sup><span>1,2</span></sup>,
-<a href="https://xwcv.github.io/">Xinggang Wang</a><sup><span>3</span></sup>,
+<a href="https://scholar.google.com/citations?hl=zh-CN&user=PH8rJHYAAAAJ">Tianheng Cheng</a><sup><span>2,3,*</span></sup>, 
+<a href="https://linsong.info/">Lin Song</a><sup><span>1,📧,*</span></sup>,
+<a href="https://yxgeee.github.io/">Yixiao Ge</a><sup><span>1,🌟,2</span></sup>,
 <a href="http://eic.hust.edu.cn/professor/liuwenyu/"> Wenyu Liu</a><sup><span>3</span></sup>,
+<a href="https://xwcv.github.io/">Xinggang Wang</a><sup><span>3,📧</span></sup>,
 <a href="https://scholar.google.com/citations?user=4oXBp9UAAAAJ&hl=en">Ying Shan</a><sup><span>1,2</span></sup>
 </br>
+
+\* Equal contribution 🌟 Project lead 📧 Corresponding author
 
 <sup>1</sup> Tencent AI Lab,  <sup>2</sup> ARC Lab, Tencent PCG
 <sup>3</sup> Huazhong University of Science and Technology
 <br>
 <div>
 
+[![arxiv paper](https://img.shields.io/badge/Project-Page-green)](https://wondervictor.github.io/)
 [![arxiv paper](https://img.shields.io/badge/arXiv-Paper-red)](https://arxiv.org/abs/2401.17270)
 [![video](https://img.shields.io/badge/🤗HugginngFace-Spaces-orange)](https://huggingface.co/spaces/stevengrove/YOLO-World)
 [![license](https://img.shields.io/badge/License-GPLv3.0-blue)](LICENSE)
@@ -24,7 +27,10 @@
 
 ## Updates 
 
-`[2024-1-31]:` We are excited to launch **YOLO-World**, a cutting-edge real-time open-vocabulary object detector.
+`[2024-1-31]:` We are excited to launch **YOLO-World**, a cutting-edge real-time open-vocabulary object detector.  
+`[2024-2-1]:` We deploy the YOLO-World demo on [HuggingFace 🤗](https://huggingface.co/spaces/stevengrove/YOLO-World), you can try it now!
+
+## TODO
 
 ## Highlights
 
