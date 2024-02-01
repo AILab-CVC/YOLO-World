@@ -27,15 +27,19 @@
 
 ## Updates 
 
-YOLO-World is under active development and please stay tuned ☕️!
-
-`[2024-1-31]:` We are excited to launch **YOLO-World**, a cutting-edge real-time open-vocabulary object detector.  
+`🔥[2024-2-1]:` We've released the code and weights of YOLO-World now!  
 `[2024-2-1]:` We deploy the YOLO-World demo on [HuggingFace 🤗](https://huggingface.co/spaces/stevengrove/YOLO-World), you can try it now!  
-`[2024-2-1]:` We've released the code and weights of YOLO-World now!
+`[2024-1-31]:` We are excited to launch **YOLO-World**, a cutting-edge real-time open-vocabulary object detector.  
+
+
 
 ## TODO
 
+YOLO-World is under active development and please stay tuned ☕️!
+
 - [ ] Complete documents for pre-training YOLO-World.
+- [ ] COCO & LVIS fine-tuning.
+- [ ] Extra pre-trained models on more data, such as CC3M.
 - [ ] Deployment toolkits, e.g., ONNX or TensorRT. 
 - [ ] Inference acceleration and scripts for speed evaluation.
 - [ ] Automatic labeling framework for image-text pairs, such as CC3M.
@@ -70,9 +74,9 @@ We've pre-trained YOLO-World-S/M/L from scratch and evaluate on the `LVIS val-1.
 
 | model | Pre-train Data | AP<sup>fixed</sup> | AP<sup>mini</su> | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | AP<sup>val</su> | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | weights |
 | :---- | :------------- | :----------------: | :---------------:| :------------: |:-------------: | :------------: | :-:| :------------: |:-------------: | :------------:  | :---: |
-| [YOLO-World-S](./configs/pretrain/yolo_world_s_dual_3block_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 26.2 | 24.3 | 16.6 | 22.1 | 27.7 | 17.8 | 11.0 | 14.8 | 24.0 | [HF Checkpoints 🤗]() |
-| [YOLO-World-M](./configs/pretrain/yolo_world_m_dual_l2norm_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 31.0 | 28.6 | 19.7 | 26.6 | 31.9 |  | | | | [HF Checkpoints 🤗]() |
-| [YOLO-World-L](./configs/pretrain/yolo_world_s_dual_3block_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 35.0 | 32.5 | 22.3 | 30.6 | 36.1 | 24.8 | 17.8 | 22.4 | 32.5 | [HF Checkpoints 🤗]()  | 
+| [YOLO-World-S](./configs/pretrain/yolo_world_s_dual_3block_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 26.2 | 24.3 | 16.6 | 22.1 | 27.7 | 17.8 | 11.0 | 14.8 | 24.0 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/resolve/main/yolo_world_s_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-18bea4d2.pth) |
+| [YOLO-World-M](./configs/pretrain/yolo_world_m_dual_l2norm_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 31.0 | 28.6 | 19.7 | 26.6 | 31.9 | 22.3 | 16.2 | 19.0 | 28.7 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/resolve/main/yolo_world_m_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-2b7bd1be.pth) |
+| [YOLO-World-L](./configs/pretrain/yolo_world_s_dual_3block_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 35.0 | 32.5 | 22.3 | 30.6 | 36.1 | 24.8 | 17.8 | 22.4 | 32.5 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/resolve/main/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth)  | 
 
 **NOTE:**
 1. The evaluation results of AP<sup>fixed</sup> are tested on LVIS `minival` with [fixed AP](https://github.com/achalddave/large-vocab-devil).
@@ -134,7 +138,7 @@ You can directly download the ONNX model through the online [demo](https://huggi
 
 ## Acknowledgement
 
-We sincerely thank [mmyolo](https://github.com/open-mmlab/mmyolo), [mmdetection](https://github.com/open-mmlab/mmdetection), and [transformers](https://github.com/huggingface/transformers) for providing their wonderful code to the community!
+We sincerely thank [mmyolo](https://github.com/open-mmlab/mmyolo), [mmdetection](https://github.com/open-mmlab/mmdetection), [GLIP](https://github.com/microsoft/GLIP), and [transformers](https://github.com/huggingface/transformers) for providing their wonderful code to the community!
 
 ## Citations
 If you find YOLO-World is useful in your research or applications, please consider giving us a star 🌟 and citing it.
