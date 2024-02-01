@@ -49,7 +49,7 @@ This repo contains the PyTorch implementation, pre-trained weights, and pre-trai
 
 * YOLO-World is the next-generation YOLO detector, with a strong open-vocabulary detection capability and grounding ability.
 
-* YOLO-World presents a *prompt-then-detect* paradigm for efficient user-vocabulary inference, which re-parameterizes vocabulary embeddings as parameters into the model and achieve superior inference speed. You can try to export your own detection model without extra training or fine-tuning in our [online demo]()!
+* YOLO-World presents a *prompt-then-detect* paradigm for efficient user-vocabulary inference, which re-parameterizes vocabulary embeddings as parameters into the model and achieve superior inference speed. You can try to export your own detection model without extra training or fine-tuning in our [online demo](https://huggingface.co/spaces/stevengrove/YOLO-World)!
 
 
 <center>
@@ -62,27 +62,22 @@ This repo contains the PyTorch implementation, pre-trained weights, and pre-trai
 The You Only Look Once (YOLO) series of detectors have established themselves as efficient and practical tools. However, their reliance on predefined and trained object categories limits their applicability in open scenarios. Addressing this limitation, we introduce YOLO-World, an innovative approach that enhances YOLO with open-vocabulary detection capabilities through vision-language modeling and pre-training on large-scale datasets. Specifically, we propose a new Re-parameterizable Vision-Language Path Aggregation Network (RepVL-PAN) and region-text contrastive loss to facilitate the interaction between visual and linguistic information. Our method excels in detecting a wide range of objects in a zero-shot manner with high efficiency. On the challenging LVIS dataset, YOLO-World achieves 35.4 AP with 52.0 FPS on V100, which outperforms many state-of-the-art methods in terms of both accuracy and speed. Furthermore, the fine-tuned YOLO-World achieves remarkable performance on several downstream tasks, including object detection and open-vocabulary instance segmentation.
 
 
-## Demo
-
-
 ## Main Results
 
 We've pre-trained YOLO-World-S/M/L from scratch and evaluate on the `LVIS val-1.0` and `LVIS minival`. We provide the pre-trained model weights and training logs for applications/research or re-producing the results.
 
 ### Zero-shot Inference on LVIS dataset
 
-| model | Pre-train Data | AP<sup>mini</su> | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | AP<sup>val</su> | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | weights | log |
-| :---- | :------------- | :-:| :------------: |:-------------: | :------------: | :-:| :------------: |:-------------: | :------------:  | :---: | :---: |  
-| [YOLO-World-S]() | O365+GoldG | 26.2 | 19.1 | 23.6 | 29.8  | - |  | [log]() |
-| [YOLO-World-M]() | O365+GoldG | 31.0 | 23.8 | 29.2 | 33.9  | - | | [log]() |
-| [YOLO-World-L]() | O365+GoldG | 35.0 | 27.1 | 32.8 | 38.3 | - | | [log]() |
+| model | Pre-train Data | AP<sup>fixed</sup> | AP<sup>mini</su> | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | AP<sup>val</su> | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | weights |
+| :---- | :------------- | :----------------: | :---------------:| :------------: |:-------------: | :------------: | :-:| :------------: |:-------------: | :------------:  | :---: |
+| [YOLO-World-S](./configs/pretrain/yolo_world_s_dual_3block_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 26.2 | 24.3 | 16.6 | 22.1 | 27.7 | 17.8 | 11.0 | 14.8 | 24.0 | [HF Checkpoints 🤗]() |
+| [YOLO-World-M](./configs/pretrain/yolo_world_m_dual_l2norm_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 31.0 | 28.6 | 19.7 | 26.6 | 31.9 |  | | | | [HF Checkpoints 🤗]() |
+| [YOLO-World-L](./configs/pretrain/yolo_world_s_dual_3block_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 35.0 | 32.5 | 22.3 | 30.6 | 36.1 | 24.8 | 17.8 | 22.4 | 32.5 | [HF Checkpoints 🤗]()  | 
 
 **NOTE:**
-1. The evaluation results are tested on LVIS minival ([fixed AP](https://github.com/achalddave/large-vocab-devil) with 1,000 dets) and LVIS val in a zero-shot manner.
-
-
-### Finetuning on COCO dataset
-
+1. The evaluation results of AP<sup>fixed</sup> are tested on LVIS `minival` with [fixed AP](https://github.com/achalddave/large-vocab-devil).
+2. The evaluation results of AP<sup>mini</sup> are tested on LVIS `minival`.
+3. The evaluation results of AP<sup>val</sup> are tested on LVIS `val 1.0`.
 
 ## Getting started
 

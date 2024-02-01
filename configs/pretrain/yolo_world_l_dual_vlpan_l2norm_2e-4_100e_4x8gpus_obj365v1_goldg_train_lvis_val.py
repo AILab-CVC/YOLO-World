@@ -1,5 +1,5 @@
 _base_ = ('../../third_party/mmyolo/configs/yolov8/'
-          'yolov8_m_syncbn_fast_8xb16-500e_coco.py')
+          'yolov8_l_syncbn_fast_8xb16-500e_coco.py')
 custom_imports = dict(imports=['yolo_world'],
                       allow_failed_imports=False)
 
@@ -123,7 +123,7 @@ coco_val_dataset = dict(
     dataset=dict(type='YOLOv5LVISV1Dataset',
                  data_root='data/coco/',
                  test_mode=True,
-                 ann_file='lvis/lvis_v1_minival_inserted_image_name.json',
+                 ann_file='lvis/lvis_v1_val.json',
                  data_prefix=dict(img=''),
                  batch_shapes_cfg=None),
     class_text_path='data/captions/lvis_v1_class_captions.json',
@@ -132,8 +132,7 @@ val_dataloader = dict(dataset=coco_val_dataset)
 test_dataloader = val_dataloader
 
 val_evaluator = dict(type='mmdet.LVISMetric',
-                     ann_file='data/coco/lvis/\
-                         lvis_v1_minival_inserted_image_name.json',
+                     ann_file='data/coco/lvis/lvis_v1_val.json',
                      metric='bbox')
 test_evaluator = val_evaluator
 
