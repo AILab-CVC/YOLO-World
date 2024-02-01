@@ -90,7 +90,7 @@ YOLO-World is developed based on `torch==1.11.0` `mmyolo==0.6.0` and `mmdetectio
 pip install mmdetection==3.0.0 mmengine transformers
 
 # clone the repo
-git clone https://xxxx.YOLO-World.git
+git clone https://github.com/AILAB-CVC/YOLO-World.git
 cd YOLO-World 
 
 # install mmyolo
@@ -130,7 +130,7 @@ chmod +x tools/dist_test.sh
 ## Deployment
 
 We provide the details about deployment for downstream applications in [docs/deployment](./docs/deploy.md).
-You can directly download the ONNX model through the online [demo]() in Huggingface Spaces 🤗.
+You can directly download the ONNX model through the online [demo](https://huggingface.co/spaces/stevengrove/YOLO-World) in Huggingface Spaces 🤗.
 
 ## Acknowledgement
 
