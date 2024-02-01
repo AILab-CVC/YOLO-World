@@ -27,10 +27,19 @@
 
 ## Updates 
 
+YOLO-World is under active development and please stay tuned ☕️!
+
 `[2024-1-31]:` We are excited to launch **YOLO-World**, a cutting-edge real-time open-vocabulary object detector.  
-`[2024-2-1]:` We deploy the YOLO-World demo on [HuggingFace 🤗](https://huggingface.co/spaces/stevengrove/YOLO-World), you can try it now!
+`[2024-2-1]:` We deploy the YOLO-World demo on [HuggingFace 🤗](https://huggingface.co/spaces/stevengrove/YOLO-World), you can try it now!  
+`[2024-2-1]:` We've released the code and weights of YOLO-World now!
 
 ## TODO
+
+- [ ] Complete documents for pre-training YOLO-World.
+- [ ] Deployment toolkits, e.g., ONNX or TensorRT. 
+- [ ] Inference acceleration and scripts for speed evaluation.
+- [ ] Automatic labeling framework for image-text pairs, such as CC3M.
+
 
 ## Highlights
 
@@ -62,14 +71,14 @@ We've pre-trained YOLO-World-S/M/L from scratch and evaluate on the `LVIS val-1.
 
 ### Zero-shot Inference on LVIS dataset
 
-| model | Pre-train Data | AP | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | weights | log |
-| :---- | :------------- | :-:| :------------: |:-------------: | :-------: | :---: | :---: |
-| [YOLO-World-S]() | O365+GoldG | 26.2 | 19.1 | 23.6 | 29.8  | - | [coming soon] | [log]() |
-| [YOLO-World-M]() | O365+GoldG | 31.0 | 23.8 | 29.2 | 33.9  | - | [coming soon] | [log]() |
-| [YOLO-World-L]() | O365+GoldG | 35.0 | 27.1 | 32.8 | 38.3 | - | [coming soon]| [log]() |
+| model | Pre-train Data | AP<sup>mini</su> | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | AP<sup>val</su> | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | weights | log |
+| :---- | :------------- | :-:| :------------: |:-------------: | :------------: | :-:| :------------: |:-------------: | :------------:  | :---: | :---: |  
+| [YOLO-World-S]() | O365+GoldG | 26.2 | 19.1 | 23.6 | 29.8  | - |  | [log]() |
+| [YOLO-World-M]() | O365+GoldG | 31.0 | 23.8 | 29.2 | 33.9  | - | | [log]() |
+| [YOLO-World-L]() | O365+GoldG | 35.0 | 27.1 | 32.8 | 38.3 | - | | [log]() |
 
 **NOTE:**
-1. The evaluation results are tested on LVIS minival in a zero-shot manner.
+1. The evaluation results are tested on LVIS minival ([fixed AP](https://github.com/achalddave/large-vocab-devil) with 1,000 dets) and LVIS val in a zero-shot manner.
 
 
 ### Finetuning on COCO dataset
