@@ -82,7 +82,7 @@ obj365v1_train_dataset = dict(
         ann_file='annotations/objects365_train.json',
         data_prefix=dict(img='train/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
-    class_text_path='data/captions/obj365v1_class_captions.json',
+    class_text_path='data/texts/obj365v1_class_texts.json',
     pipeline=train_pipeline)
 
 mg_train_dataset = dict(type='YOLOv5MixedGroundingDataset',
@@ -126,7 +126,7 @@ coco_val_dataset = dict(
                  ann_file='lvis/lvis_v1_val.json',
                  data_prefix=dict(img=''),
                  batch_shapes_cfg=None),
-    class_text_path='data/captions/lvis_v1_class_captions.json',
+    class_text_path='data/texts/lvis_v1_class_texts.json',
     pipeline=test_pipeline)
 val_dataloader = dict(dataset=coco_val_dataset)
 test_dataloader = val_dataloader
