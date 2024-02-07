@@ -9,7 +9,7 @@ addict
 yapf
 numpy
 opencv-python
-supervision==0.6.0
+supervision==0.18.0
 ftfy
 regex
 pot

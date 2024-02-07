@@ -3,9 +3,11 @@ import argparse
 import os.path as osp
 from functools import partial
 
+import cv2
 import torch
 import gradio as gr
 import numpy as np
+import supervision as sv
 from PIL import Image
 from torchvision.ops import nms
 from mmengine.config import Config, DictAction
@@ -56,26 +58,32 @@ def run_image(runner,
         output = runner.model.test_step(data_batch)[0]
         pred_instances = output.pred_instances
 
-    keep_idxs = nms(pred_instances.bboxes,
-                    pred_instances.scores,
-                    iou_threshold=nms_thr)
-    pred_instances = pred_instances[keep_idxs]
+    keep = nms(pred_instances.bboxes, pred_instances.scores, iou_threshold=nms_thr)
+    pred_instances = pred_instances[keep]
     pred_instances = pred_instances[pred_instances.scores.float() > score_thr]
+
     if len(pred_instances.scores) > max_num_boxes:
         indices = pred_instances.scores.float().topk(max_num_boxes)[1]
         pred_instances = pred_instances[indices]
-    output.pred_instances = pred_instances
+
+    pred_instances = pred_instances.cpu().numpy()
+    detections = sv.Detections(
+        xyxy=pred_instances['bboxes'],
+        class_id=pred_instances['labels'],
+        confidence=pred_instances['scores']
+    )
+    labels = [
+        f"{texts[class_id][0]} {confidence:0.2f}"
+        for class_id, confidence
+        in zip(detections.class_id, detections.confidence)
+    ]
 
     image = np.array(image)
-    visualizer = DetLocalVisualizer()
-    visualizer.dataset_meta['classes'] = [t[0] for t in texts]
-    visualizer.add_datasample('image',
-                              np.array(image),
-                              output,
-                              draw_gt=False,
-                              out_file=image_path,
-                              pred_score_thr=score_thr)
-    image = Image.open(image_path)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR) # Convert RGB to BGR
+    image = BOUNDING_BOX_ANNOTATOR.annotate(image, detections)
+    image = LABEL_ANNOTATOR.annotate(image, detections, labels=labels)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # Convert BGR to RGB
+    image = Image.fromarray(image)
     return image
 
 
