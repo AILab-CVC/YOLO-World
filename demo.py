@@ -19,6 +19,9 @@ from mmdet.datasets import CocoDataset
 from mmyolo.registry import RUNNERS
 
 
+BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator()
+LABEL_ANNOTATOR = sv.LabelAnnotator()
+
 def parse_args():
     parser = argparse.ArgumentParser(description='YOLO-World Demo')
     parser.add_argument('config', help='test config file path')
@@ -124,8 +127,7 @@ def demo(runner, args):
                                     interactive=True,
                                     label='NMS Threshold')
             with gr.Column(scale=0.7):
-                output_image = gr.Image(lines=20,
-                                        type='pil',
+                output_image = gr.Image(type='pil',
                                         label='output image')
 
         submit.click(partial(run_image, runner),
