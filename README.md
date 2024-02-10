@@ -27,8 +27,8 @@
 
 
 ## Updates 
-
-`🔥[2024-2-3]:` We support the `Gradio` demo now in the repo and you can build the YOLO-World demo on your own device!  
+`🔥[2024-2-10]:` We provide the [fine-tuning](./docs/finetuning.md) and [data](./docs/data.md) details for fine-tuning YOLO-World on the COCO dataset or the custom datasets!
+`[2024-2-3]:` We support the `Gradio` demo now in the repo and you can build the YOLO-World demo on your own device!  
 `[2024-2-1]:` We've released the code and weights of YOLO-World now!  
 `[2024-2-1]:` We deploy the YOLO-World demo on [HuggingFace 🤗](https://huggingface.co/spaces/stevengrove/YOLO-World), you can try it now!  
 `[2024-1-31]:` We are excited to launch **YOLO-World**, a cutting-edge real-time open-vocabulary object detector.  
@@ -40,8 +40,8 @@
 YOLO-World is under active development and please stay tuned ☕️!
 
 - [x] Gradio demo!
-- [ ] Complete documents for pre-training YOLO-World.
-- [ ] COCO & LVIS fine-tuning.
+- [x] Complete documents for pre-training YOLO-World.
+- [x] COCO & LVIS fine-tuning.
 - [ ] Extra pre-trained models on more data, such as CC3M.
 - [ ] Deployment toolkits, e.g., ONNX or TensorRT. 
 - [ ] Inference acceleration and scripts for speed evaluation.
@@ -122,6 +122,10 @@ chmod +x tools/dist_test.sh
 ```
 
 **NOTE:** We mainly evaluate the performance on LVIS-minival for pre-training.
+
+## Fine-tuning YOLO-World
+
+We provide the details about fine-tuning YOLO-World in [docs/fine-tuning](./docs/finetuning.md).
 
 ## Deployment
 
