@@ -93,7 +93,8 @@ We've pre-trained YOLO-World-S/M/L from scratch and evaluate on the `LVIS val-1.
 YOLO-World is developed based on `torch==1.11.0` `mmyolo==0.6.0` and `mmdetection==3.0.0`.
 
 ```bash
-python setup.py build develop
+pip install torch wheel -q
+pip install -e .
 ```
 
 ### 2. Preparing Data
@@ -137,6 +138,7 @@ You can directly download the ONNX model through the online [demo](https://huggi
 We provide the [Gradio](https://www.gradio.app/) demo for local devices:
 
 ```bash
+pip install gradio
 python demo.py path/to/config path/to/weights
 ```
 
