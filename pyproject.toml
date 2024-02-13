@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools","wheel","torch"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yolo_world"
+version = "0.1.0"  # Replace with your actual version
+description = "YOLO-World: Real-time Open Vocabulary Object Detection"
+readme = "README.md"
+keywords = ["object detection"]
+authors = [
+    { name = "Tencent AILab", email = "ronnysong@tencent.com" },
+]
+license = {text = "Apache License 2.0"}
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">= 3.7"
+
+dependencies = [
+    "wheel",
+    "torch",
+    "torchvision",
+    "transformers",
+    "tokenizers",
+    "numpy",
+    "opencv-python",
+    "supervision==0.18.0",
+    "openmim",
+    "mmcv-lite>=2.0.0rc4,<2.1.0",
+    "mmdet>=3.0.0",
+    "mmengine>=0.7.1",
+    "mmcv",
+    'mmyolo @ git+https://github.com/onuralpszr/mmyolo.git',
+
+]
+
+[tool.setuptools]
+package-dir = {"yolo_world" = "yolo_world"}
+include-package-data = false
+license-files = ["LICENSE"]
+zip-safe = true
+
+[tool.setuptools.packages.find]
+include = ["yolo_world*"]
+exclude = ["docs*", "tests*","third_party*","assets*"]
