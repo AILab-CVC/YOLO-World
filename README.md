@@ -27,6 +27,7 @@
 
 
 ## Updates 
+`🔥[2024-2-14]:` We provide the [`image_demo`](demo.py) for inference on images or directories.   
 `🔥[2024-2-10]:` We provide the [fine-tuning](./docs/finetuning.md) and [data](./docs/data.md) details for fine-tuning YOLO-World on the COCO dataset or the custom datasets!  
 `[2024-2-3]:` We support the `Gradio` demo now in the repo and you can build the YOLO-World demo on your own device!  
 `[2024-2-1]:` We've released the code and weights of YOLO-World now!  
@@ -134,11 +135,26 @@ You can directly download the ONNX model through the online [demo](https://huggi
 
 ## Demo
 
+### Gradio Demo
+
 We provide the [Gradio](https://www.gradio.app/) demo for local devices:
 
 ```bash
 python demo.py path/to/config path/to/weights
 ```
+
+### Image Demo
+
+We provide a simple image demo for inference on images with visualization outputs.
+
+```bash
+python image_demo.py path/to/config path/to/weights image/path/directory 'person,dog,cat' --topk 100 --threshold 0.005 --output-dir demo_outputs
+```
+
+**Notes:**
+* The `image` can be a directory or a single image.
+* The `texts` can be a string of categories (noun phrases) which is separated by a comma. We also support `txt` file in which each line contains a category ( noun phrases).
+* The `topk` and `threshold` control the number of predictions and the confidence threshold.
 
 ## Acknowledgement
 
