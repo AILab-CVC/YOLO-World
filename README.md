@@ -82,7 +82,7 @@ We've pre-trained YOLO-World-S/M/L from scratch and evaluate on the `LVIS val-1.
 | [YOLO-World-S](./configs/pretrain/yolo_world_s_dual_3block_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 26.2 | 24.3 | 16.6 | 22.1 | 27.7 | 17.8 | 11.0 | 14.8 | 24.0 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/resolve/main/yolo_world_s_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-18bea4d2.pth) |
 | [YOLO-World-M](./configs/pretrain/yolo_world_m_dual_l2norm_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 31.0 | 28.6 | 19.7 | 26.6 | 31.9 | 22.3 | 16.2 | 19.0 | 28.7 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/resolve/main/yolo_world_m_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-2b7bd1be.pth) |
 | [YOLO-World-L](./configs/pretrain/yolo_world_s_dual_3block_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 35.0 | 32.5 | 22.3 | 30.6 | 36.1 | 24.8 | 17.8 | 22.4 | 32.5 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/resolve/main/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth)  | 
-| [YOLO-World-L](./configs/pretrain/yolo_world_s_dual_3block_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG+CC3M-Lite | 35.4 | 33.0 | 23.6 | 32.0 | 35.5 | 25.3 | 18.0 | 22.1 | 32.1 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_cc3mlite_train_pretrained-7a5eea3b.pth) |
+| 🔥 [YOLO-World-L](./configs/pretrain/yolo_world_s_dual_3block_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG+CC3M-Lite | 35.4 | 33.0 | 23.6 | 32.0 | 35.5 | 25.3 | 18.0 | 22.1 | 32.1 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_cc3mlite_train_pretrained-7a5eea3b.pth) |
 
 **NOTE:**
 1. The evaluation results of AP<sup>fixed</sup> are tested on LVIS `minival` with [fixed AP](https://github.com/achalddave/large-vocab-devil).
@@ -156,14 +156,15 @@ We provide a simple image demo for inference on images with visualization output
 python image_demo.py path/to/config path/to/weights image/path/directory 'person,dog,cat' --topk 100 --threshold 0.005 --output-dir demo_outputs
 ```
 
-### Google Golab Notebook
-
-We sincerely thank [Onuralp](https://github.com/onuralpszr) for sharing the [Colab Demo](https://colab.research.google.com/drive/1F_7S5lSaFM06irBCZqjhbN7MpUXo6WwO?usp=sharing), you can have a try 😊！
-
 **Notes:**
 * The `image` can be a directory or a single image.
 * The `texts` can be a string of categories (noun phrases) which is separated by a comma. We also support `txt` file in which each line contains a category ( noun phrases).
 * The `topk` and `threshold` control the number of predictions and the confidence threshold.
+
+### Google Golab Notebook
+
+We sincerely thank [Onuralp](https://github.com/onuralpszr) for sharing the [Colab Demo](https://colab.research.google.com/drive/1F_7S5lSaFM06irBCZqjhbN7MpUXo6WwO?usp=sharing), you can have a try 😊！
+
 
 ## Acknowledgement
 
