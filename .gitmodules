@@ -1,3 +1,3 @@
 [submodule "third_party/mmyolo"]
 	path = third_party/mmyolo
-	url = https://github.com/open-mmlab/mmyolo.git
+	url = https://github.com/onuralpszr/mmyolo.git
