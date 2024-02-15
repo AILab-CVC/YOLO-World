@@ -135,7 +135,7 @@ def demo(runner, args):
                      [output_image])
         clear.click(lambda: [[], '', ''], None,
                     [image, input_text, output_image])
-        demo.launch(server_name='0.0.0.0', server_port=80)
+        demo.launch(server_name='0.0.0.0', server_port=8080)  # port 80 does not work for me
 
 
 if __name__ == '__main__':
