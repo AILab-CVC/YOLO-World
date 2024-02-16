@@ -27,8 +27,14 @@ def parse_args():
         help=
         'text prompts, including categories separated by a comma or a txt file with each line as a promopt.'
     )
-    parser.add_argument('--topk', default=100, type=int, help='keep topk predictions.')
-    parser.add_argument('--threshold', default=0.0, type=float, help='confidence score threshold for predictions.')
+    parser.add_argument('--topk',
+                        default=100,
+                        type=int,
+                        help='keep topk predictions.')
+    parser.add_argument('--threshold',
+                        default=0.0,
+                        type=float,
+                        help='confidence score threshold for predictions.')
     parser.add_argument('--device',
                         default='cuda:0',
                         help='device used for inference.')

@@ -7,10 +7,7 @@ from torch.nn.modules.batchnorm import _BatchNorm
 from mmengine.model import BaseModule
 from mmyolo.registry import MODELS
 from mmdet.utils import OptMultiConfig, ConfigType
-from transformers import (
-    AutoTokenizer,
-    AutoModel,
-    CLIPTextConfig)
+from transformers import (AutoTokenizer, AutoModel, CLIPTextConfig)
 from transformers import CLIPTextModelWithProjection as CLIPTP
 
 
@@ -74,8 +71,7 @@ class HuggingCLIPLanguageBackbone(BaseModule):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         clip_config = CLIPTextConfig.from_pretrained(model_name,
                                                      attention_dropout=dropout)
-        self.model = CLIPTP.from_pretrained(model_name,
-                                            config=clip_config)
+        self.model = CLIPTP.from_pretrained(model_name, config=clip_config)
         self._freeze_modules()
 
     def forward_cache(self, text: List[List[str]]) -> Tensor:
@@ -200,12 +196,31 @@ class MultiModalYOLOBackbone(BaseModule):
     def __init__(self,
                  image_model: ConfigType,
                  text_model: ConfigType,
+                 frozen_stages: int = -1,
                  init_cfg: OptMultiConfig = None) -> None:
 
         super().__init__(init_cfg)
 
         self.image_model = MODELS.build(image_model)
         self.text_model = MODELS.build(text_model)
+        self.frozen_stages = frozen_stages
+        self._freeze_stages()
+
+    def _freeze_stages(self):
+        """Freeze the parameters of the specified stage so that they are no
+        longer updated."""
+        if self.frozen_stages >= 0:
+            for i in range(self.frozen_stages + 1):
+                m = getattr(self.image_model, self.image_model.layers[i])
+                m.eval()
+                for param in m.parameters():
+                    param.requires_grad = False
+
+    def train(self, mode: bool = True):
+        """Convert the model into training mode while keep normalization layer
+        frozen."""
+        super().train(mode)
+        self._freeze_stages()
 
     def forward(self, image: Tensor,
                 text: List[List[str]]) -> Tuple[Tuple[Tensor], Tensor]:

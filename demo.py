@@ -14,7 +14,6 @@ from mmengine.config import Config, DictAction
 from mmengine.runner import Runner
 from mmengine.runner.amp import autocast
 from mmengine.dataset import Compose
-from mmdet.visualization import DetLocalVisualizer
 from mmdet.datasets import CocoDataset
 from mmyolo.registry import RUNNERS
 

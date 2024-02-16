@@ -1,9 +1,9 @@
-_base_ = ('../../third_party/mmyolo/configs/yolov8/'
-          'yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco.py')
+_base_ = (
+    '../../third_party/mmyolo/configs/yolov8/yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco.py'
+)
 custom_imports = dict(imports=['yolo_world'], allow_failed_imports=False)
-
 # hyper-parameters
-num_classes = 80
+num_classes = 1203
 num_training_classes = 80
 max_epochs = 80  # Maximum training epochs
 close_mosaic_epochs = 10
@@ -12,10 +12,18 @@ text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
 base_lr = 2e-4
+
 weight_decay = 0.05
-train_batch_size_per_gpu = 16
+train_batch_size_per_gpu = 8
 load_from = 'pretrained_models/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth'
 persistent_workers = False
+
+# Polygon2Mask
+downsample_ratio = 4
+mask_overlap = False
+use_mask2refine = True
+max_aspect_ratio = 100
+min_area_ratio = 0.01
 
 # model settings
 model = dict(
@@ -31,17 +39,54 @@ model = dict(
         text_model=dict(
             type='HuggingCLIPLanguageBackbone',
             model_name='pretrained_models/clip-vit-base-patch32-projection',
-            frozen_modules=['all'])),
-    neck=dict(type='YOLOWorldPAFPN',
+            frozen_modules=[])),
+    neck=dict(type='YOLOWolrdDualPAFPN',
               guide_channels=text_channels,
               embed_channels=neck_embed_channels,
               num_heads=neck_num_heads,
-              block_cfg=dict(type='EfficientCSPLayerWithTwoConv')),
-    bbox_head=dict(type='YOLOWorldHead',
-                   head_module=dict(type='YOLOWorldHeadModule',
+              block_cfg=dict(type='MaxSigmoidCSPLayerWithTwoConv'),
+              text_enhancder=dict(type='ImagePoolingAttentionModule',
+                                  embed_channels=256,
+                                  num_heads=8)),
+    bbox_head=dict(type='YOLOWorldSegHead',
+                   head_module=dict(type='YOLOWorldSegHeadModule',
                                     embed_dims=text_channels,
-                                    num_classes=num_training_classes)),
-    train_cfg=dict(assigner=dict(num_classes=num_training_classes)))
+                                    num_classes=num_training_classes,
+                                    mask_channels=32,
+                                    proto_channels=256),
+                   mask_overlap=mask_overlap,
+                   loss_mask=dict(type='mmdet.CrossEntropyLoss',
+                                  use_sigmoid=True,
+                                  reduction='none'),
+                   loss_mask_weight=1.0),
+    train_cfg=dict(assigner=dict(num_classes=num_training_classes)),
+    test_cfg=dict(mask_thr_binary=0.5, fast_test=True))
+
+pre_transform = [
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
+    dict(type='LoadAnnotations',
+         with_bbox=True,
+         with_mask=True,
+         mask2bbox=True)
+]
+
+last_transform = [
+    dict(type='mmdet.Albu',
+         transforms=_base_.albu_train_transforms,
+         bbox_params=dict(type='BboxParams',
+                          format='pascal_voc',
+                          label_fields=['gt_bboxes_labels',
+                                        'gt_ignore_flags']),
+         keymap={
+             'img': 'image',
+             'gt_bboxes': 'bboxes'
+         }),
+    dict(type='YOLOv5HSVRandomAug'),
+    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(type='Polygon2Mask',
+         downsample_ratio=downsample_ratio,
+         mask_overlap=mask_overlap),
+]
 
 # dataset settings
 text_transform = [
@@ -50,7 +95,7 @@ text_transform = [
          max_num_samples=num_training_classes,
          padding_to_max=True,
          padding_value=''),
-    dict(type='mmdet.PackDetInputs',
+    dict(type='PackDetInputs',
          meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
                     'flip_direction', 'texts'))
 ]
@@ -58,7 +103,7 @@ mosaic_affine_transform = [
     dict(type='MultiModalMosaic',
          img_scale=_base_.img_scale,
          pad_val=114.0,
-         pre_transform=_base_.pre_transform),
+         pre_transform=pre_transform),
     dict(type='YOLOv5CopyPaste', prob=_base_.copypaste_prob),
     dict(
         type='YOLOv5RandomAffine',
@@ -70,32 +115,49 @@ mosaic_affine_transform = [
         border=(-_base_.img_scale[0] // 2, -_base_.img_scale[1] // 2),
         border_val=(114, 114, 114),
         min_area_ratio=_base_.min_area_ratio,
-        use_mask_refine=_base_.use_mask2refine)
+        use_mask_refine=True)
 ]
 train_pipeline = [
-    *_base_.pre_transform, *mosaic_affine_transform,
+    *pre_transform, *mosaic_affine_transform,
     dict(type='YOLOv5MultiModalMixUp',
          prob=_base_.mixup_prob,
-         pre_transform=[*_base_.pre_transform, *mosaic_affine_transform]),
-    *_base_.last_transform[:-1], *text_transform
+         pre_transform=[*pre_transform, *mosaic_affine_transform]),
+    *last_transform, *text_transform
 ]
-train_pipeline_stage2 = [*_base_.train_pipeline_stage2[:-1], *text_transform]
-coco_train_dataset = dict(_delete_=True,
-                          type='MultiModalDataset',
-                          dataset=dict(
-                              type='YOLOv5CocoDataset',
-                              data_root='data/coco',
-                              ann_file='annotations/instances_train2017.json',
-                              data_prefix=dict(img='train2017/'),
-                              filter_cfg=dict(filter_empty_gt=False,
-                                              min_size=32)),
-                          class_text_path='data/texts/coco_class_texts.json',
-                          pipeline=train_pipeline)
 
+_train_pipeline_stage2 = [
+    *pre_transform,
+    dict(type='YOLOv5KeepRatioResize', scale=_base_.img_scale),
+    dict(type='LetterResize',
+         scale=_base_.img_scale,
+         allow_scale_up=True,
+         pad_val=dict(img=114.0)),
+    dict(type='YOLOv5RandomAffine',
+         max_rotate_degree=0.0,
+         max_shear_degree=0.0,
+         scaling_ratio_range=(1 - _base_.affine_scale,
+                              1 + _base_.affine_scale),
+         max_aspect_ratio=_base_.max_aspect_ratio,
+         border_val=(114, 114, 114),
+         min_area_ratio=min_area_ratio,
+         use_mask_refine=use_mask2refine), *last_transform
+]
+train_pipeline_stage2 = [*_train_pipeline_stage2, *text_transform]
+coco_train_dataset = dict(
+    _delete_=True,
+    type='MultiModalDataset',
+    dataset=dict(type='YOLOv5LVISV1Dataset',
+                 data_root='data/coco',
+                 ann_file='lvis/lvis_v1_train_base.json',
+                 data_prefix=dict(img=''),
+                 filter_cfg=dict(filter_empty_gt=True, min_size=32)),
+    class_text_path='data/captions/lvis_v1_base_class_captions.json',
+    pipeline=train_pipeline)
 train_dataloader = dict(persistent_workers=persistent_workers,
                         batch_size=train_batch_size_per_gpu,
                         collate_fn=dict(type='yolow_collate'),
                         dataset=coco_train_dataset)
+
 test_pipeline = [
     *_base_.test_pipeline[:-1],
     dict(type='LoadText'),
@@ -103,18 +165,7 @@ test_pipeline = [
          meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                     'scale_factor', 'pad_param', 'texts'))
 ]
-coco_val_dataset = dict(
-    _delete_=True,
-    type='MultiModalDataset',
-    dataset=dict(type='YOLOv5CocoDataset',
-                 data_root='data/coco',
-                 ann_file='annotations/instances_val2017.json',
-                 data_prefix=dict(img='val2017/'),
-                 filter_cfg=dict(filter_empty_gt=False, min_size=32)),
-    class_text_path='data/texts/coco_class_texts.json',
-    pipeline=test_pipeline)
-val_dataloader = dict(dataset=coco_val_dataset)
-test_dataloader = val_dataloader
+
 # training settings
 default_hooks = dict(param_scheduler=dict(scheduler_type='linear',
                                           lr_factor=0.01,
@@ -149,13 +200,27 @@ optim_wrapper = dict(optimizer=dict(
                                             'backbone.text_model':
                                             dict(lr_mult=0.01),
                                             'logit_scale':
-                                            dict(weight_decay=0.0)
+                                            dict(weight_decay=0.0),
                                         }),
                      constructor='YOLOWv5OptimizerConstructor')
 
 # evaluation settings
-val_evaluator = dict(_delete_=True,
-                     type='mmdet.CocoMetric',
-                     proposal_nums=(100, 1, 10),
-                     ann_file='data/coco/annotations/instances_val2017.json',
-                     metric='bbox')
+coco_val_dataset = dict(
+    _delete_=True,
+    type='MultiModalDataset',
+    dataset=dict(type='YOLOv5LVISV1Dataset',
+                 data_root='data/coco/',
+                 test_mode=True,
+                 ann_file='lvis/lvis_v1_val.json',
+                 data_prefix=dict(img=''),
+                 batch_shapes_cfg=None),
+    class_text_path='data/captions/lvis_v1_class_captions.json',
+    pipeline=test_pipeline)
+val_dataloader = dict(dataset=coco_val_dataset)
+test_dataloader = val_dataloader
+
+val_evaluator = dict(type='mmdet.LVISMetric',
+                     ann_file='data/coco/lvis/lvis_v1_val.json',
+                     metric=['bbox', 'segm'])
+test_evaluator = val_evaluator
+find_unused_parameters = True
