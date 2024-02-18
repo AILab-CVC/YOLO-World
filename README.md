@@ -123,6 +123,13 @@ We provide two fine-tuning strategies YOLO-World towards open-vocabulary instanc
 
 YOLO-World is developed based on `torch==1.11.0` `mmyolo==0.6.0` and `mmdetection==3.0.0`.
 
+#### Clone Project 
+
+```bash
+git clone --recursive https://github.com/AILab-CVC/YOLO-World.git
+```
+#### Install
+
 ```bash
 pip install torch wheel -q
 pip install -e .
