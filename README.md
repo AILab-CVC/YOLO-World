@@ -22,12 +22,13 @@
 [![Replicate](https://replicate.com/zsxkib/yolo-world/badge)](https://replicate.com/zsxkib/yolo-world)
 [![hfpaper](https://img.shields.io/badge/🤗HugginngFace-Paper-yellow)](https://huggingface.co/papers/2401.17270)
 [![license](https://img.shields.io/badge/License-GPLv3.0-blue)](LICENSE)
-
+[![yoloworldseg](https://img.shields.io/badge/YOLOWorldxEfficientSAM-🤗Spaces-orange)](https://huggingface.co/spaces/SkalskiP/YOLO-World)
 </div>
 </div>
 
 
 ## Updates 
+`🔥[2024-2-18]:` We thank [@Skalskip92](https://twitter.com/skalskip92) for developing the wonderful segmentation demo via connecting YOLO-World and EfficientSAM. You can try it now at the [🤗 HuggingFace Spaces](https://huggingface.co/spaces/SkalskiP/YOLO-World).   
 `🔥[2024-2-17]:` The largest model **X** of YOLO-World is released, which achieves better zero-shot performance!   
 `🔥[2024-2-17]:` We release the code & models for **YOLO-World-Seg** now! YOLO-World now supports open-vocabulary / zero-shot object segmentation!  
 `[2024-2-15]:` The pre-traind YOLO-World-L with CC3M-Lite is released!     
