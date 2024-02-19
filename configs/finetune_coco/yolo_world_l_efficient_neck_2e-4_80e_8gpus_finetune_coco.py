@@ -30,7 +30,7 @@ model = dict(
         image_model={{_base_.model.backbone}},
         text_model=dict(
             type='HuggingCLIPLanguageBackbone',
-            model_name='pretrained_models/clip-vit-base-patch32-projection',
+            model_name='openai/clip-vit-base-patch32',
             frozen_modules=['all'])),
     neck=dict(type='YOLOWorldPAFPN',
               guide_channels=text_channels,
