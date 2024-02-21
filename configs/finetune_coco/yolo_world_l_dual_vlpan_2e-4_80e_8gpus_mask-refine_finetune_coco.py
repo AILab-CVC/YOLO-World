@@ -1,6 +1,6 @@
 _base_ = (
     '../../third_party/mmyolo/configs/yolov8/'
-    'yolov8_l_syncbn_fast_8xb16-500e_coco.py')
+    'yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco.py')
 custom_imports = dict(
     imports=['yolo_world'],
     allow_failed_imports=False)
@@ -33,7 +33,7 @@ model = dict(
         image_model={{_base_.model.backbone}},
         text_model=dict(
             type='HuggingCLIPLanguageBackbone',
-            model_name='openai/clip-vit-base-patch32',
+            model_name='pretrained_models/clip-vit-base-patch32-projection',
             frozen_modules=['all'])),
     neck=dict(type='YOLOWolrdDualPAFPN',
               guide_channels=text_channels,
@@ -66,6 +66,7 @@ mosaic_affine_transform = [
         img_scale=_base_.img_scale,
         pad_val=114.0,
         pre_transform=_base_.pre_transform),
+    dict(type='YOLOv5CopyPaste', prob=_base_.copypaste_prob),
     dict(
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
@@ -75,7 +76,9 @@ mosaic_affine_transform = [
                              1 + _base_.affine_scale),
         # img_scale is (width, height)
         border=(-_base_.img_scale[0] // 2, -_base_.img_scale[1] // 2),
-        border_val=(114, 114, 114))
+        border_val=(114, 114, 114),
+        min_area_ratio=_base_.min_area_ratio,
+        use_mask_refine=_base_.use_mask2refine)
 ]
 train_pipeline = [
     *_base_.pre_transform,
