@@ -112,7 +112,7 @@ def inference_detector(runner,
         images_dict[osp.basename(image_path)] = anno_image
         annotations_dict[osp.basename(image_path)] = detections
         
-        ANNOTATIONS_DIRECTORY = r"./annotations"
+        ANNOTATIONS_DIRECTORY =  os.makedirs(r"./annotations", exist_ok=True)
 
         MIN_IMAGE_AREA_PERCENTAGE = 0.002
         MAX_IMAGE_AREA_PERCENTAGE = 0.80
