@@ -96,6 +96,8 @@ def inference_detector(runner,
         f"{texts[class_id][0]} {confidence:0.2f}" for class_id, confidence in
         zip(detections.class_id, detections.confidence)
     ]
+
+    #label images
     image = cv2.imread(image_path)
     anno_image = image.copy()
     image = BOUNDING_BOX_ANNOTATOR.annotate(image, detections)
