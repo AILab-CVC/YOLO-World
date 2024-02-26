@@ -182,6 +182,13 @@ pip install gradio
 python demo.py path/to/config path/to/weights
 ```
 
+Additionaly, you can use a Dockerfile to build an image with gradio. As a prerequisite, make sure you have respective drivers installed alongside [nvidia-container-runtime](https://stackoverflow.com/questions/59691207/docker-build-with-nvidia-runtime). Replace MODEL_NAME and WEIGHT_NAME with the respective values or ommit this and use default values from the [Dockerfile](Dockerfile#3)
+
+```bash
+docker build --build-arg="MODEL=MODEL_NAME" --build-arg="WEIGHT=WEIGHT_NAME" -t yolo_demo .
+docker run --runtime nvidia -p 8080:8080
+```
+
 ### Image Demo
 
 We provide a simple image demo for inference on images with visualization outputs.
