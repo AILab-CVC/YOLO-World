@@ -41,6 +41,9 @@ def parse_args():
     parser.add_argument('--show',
                         action='store_true',
                         help='show the detection results.')
+    parser.add_argument('--annotation',
+                        action='store_true',
+                        help='save the annotated detection results as yolo text format.')
     parser.add_argument('--amp',
                         action='store_true',
                         help='use mixed precision for inference.')
@@ -68,8 +71,8 @@ def inference_detector(runner,
                        score_thr,
                        output_dir,
                        use_amp=False,
-                       show=False):
-
+                       show=False,
+                       annotation=False):
     data_info = dict(img_id=0, img_path=image_path, texts=texts)
     data_info = runner.pipeline(data_info)
     data_batch = dict(inputs=data_info['inputs'].unsqueeze(0),
@@ -94,11 +97,38 @@ def inference_detector(runner,
         zip(detections.class_id, detections.confidence)
     ]
 
-    # label images
+    #label images
     image = cv2.imread(image_path)
+    anno_image = image.copy()
     image = BOUNDING_BOX_ANNOTATOR.annotate(image, detections)
     image = LABEL_ANNOTATOR.annotate(image, detections, labels=labels)
     cv2.imwrite(osp.join(output_dir, osp.basename(image_path)), image)
+
+
+    if annotation:
+        images_dict = {}
+        annotations_dict = {}
+
+        images_dict[osp.basename(image_path)] = anno_image
+        annotations_dict[osp.basename(image_path)] = detections
+        
+        ANNOTATIONS_DIRECTORY =  os.makedirs(r"./annotations", exist_ok=True)
+
+        MIN_IMAGE_AREA_PERCENTAGE = 0.002
+        MAX_IMAGE_AREA_PERCENTAGE = 0.80
+        APPROXIMATION_PERCENTAGE = 0.75
+        
+        sv.DetectionDataset(
+        classes=texts,
+        images=images_dict,
+        annotations=annotations_dict
+        ).as_yolo(
+        annotations_directory_path=ANNOTATIONS_DIRECTORY,
+        min_image_area_percentage=MIN_IMAGE_AREA_PERCENTAGE,
+        max_image_area_percentage=MAX_IMAGE_AREA_PERCENTAGE,
+        approximation_percentage=APPROXIMATION_PERCENTAGE
+        )
+
 
     if show:
         cv2.imshow(image)
@@ -162,5 +192,6 @@ if __name__ == '__main__':
                            args.threshold,
                            output_dir=output_dir,
                            use_amp=args.amp,
-                           show=args.show)
+                           show=args.show,
+                           annotation=args.annotation)
         progress_bar.update()
