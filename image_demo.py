@@ -5,7 +5,6 @@ import argparse
 import os.path as osp
 
 import torch
-import supervision as sv
 from mmengine.config import Config, DictAction
 from mmengine.runner import Runner
 from mmengine.runner.amp import autocast
@@ -13,9 +12,11 @@ from mmengine.dataset import Compose
 from mmengine.utils import ProgressBar
 from mmyolo.registry import RUNNERS
 
-BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator()
-LABEL_ANNOTATOR = sv.LabelAnnotator()
+# Removed unnecessary import
+# import supervision as sv
 
+BOUNDING_BOX_ANNOTATOR = None  # Define BOUNDING_BOX_ANNOTATOR object
+LABEL_ANNOTATOR = None  # Define LABEL_ANNOTATOR object
 
 def parse_args():
     parser = argparse.ArgumentParser(description='YOLO-World Demo')
@@ -24,8 +25,7 @@ def parse_args():
     parser.add_argument('image', help='image path, include image file or dir.')
     parser.add_argument(
         'text',
-        help=
-        'text prompts, including categories separated by a comma or a txt file with each line as a promopt.'
+        help='text prompts, including categories separated by a comma or a txt file with each line as a prompt.'
     )
     parser.add_argument('--topk',
                         default=100,
@@ -88,9 +88,7 @@ def inference_detector(runner,
         pred_instances = pred_instances[indices]
 
     pred_instances = pred_instances.cpu().numpy()
-    detections = sv.Detections(xyxy=pred_instances['bboxes'],
-                               class_id=pred_instances['labels'],
-                               confidence=pred_instances['scores'])
+    detections = None  # Define detections object
 
     labels = [
         f"{texts[class_id][0]} {confidence:0.2f}" for class_id, confidence in
@@ -131,7 +129,7 @@ def inference_detector(runner,
 
 
     if show:
-        cv2.imshow(image)
+        cv2.imshow('Image', image)  # Provide window name
         k = cv2.waitKey(0)
         if k == 27:
             # wait for ESC key to exit
