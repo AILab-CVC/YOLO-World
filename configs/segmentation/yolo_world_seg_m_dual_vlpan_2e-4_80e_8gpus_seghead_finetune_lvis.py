@@ -41,7 +41,7 @@ model = dict(
             type='HuggingCLIPLanguageBackbone',
             model_name='openai/clip-vit-base-patch32',
             frozen_modules=['all'])),
-    neck=dict(type='YOLOWolrdDualPAFPN',
+    neck=dict(type='YOLOWorldDualPAFPN',
               freeze_all=True,
               guide_channels=text_channels,
               embed_channels=neck_embed_channels,
