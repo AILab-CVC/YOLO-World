@@ -147,7 +147,7 @@ class YOLOWorldPAFPN(YOLOv8PAFPN):
 
 
 @MODELS.register_module()
-class YOLOWolrdDualPAFPN(YOLOWorldPAFPN):
+class YOLOWorldDualPAFPN(YOLOWorldPAFPN):
     """Path Aggregation Network used in YOLO World v8."""
     def __init__(self,
                  in_channels: List[int],
