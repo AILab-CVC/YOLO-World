@@ -1,5 +1,5 @@
 _base_ = ('../../third_party/mmyolo/configs/yolov8/'
-          'yolov8_x_syncbn_fast_8xb16-500e_coco.py')
+          'yolov8_s_syncbn_fast_8xb16-500e_coco.py')
 custom_imports = dict(imports=['yolo_world'],
                       allow_failed_imports=False)
 
@@ -31,7 +31,7 @@ model = dict(
             type='HuggingCLIPLanguageBackbone',
             model_name='openai/clip-vit-base-patch32',
             frozen_modules=['all'])),
-    neck=dict(type='YOLOWolrdPAFPN',
+    neck=dict(type='YOLOWorldPAFPN',
               guide_channels=text_channels,
               embed_channels=neck_embed_channels,
               num_heads=neck_num_heads,
