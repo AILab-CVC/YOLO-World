@@ -29,7 +29,8 @@ class MaxSigmoidAttnBlock(BaseModule):
                  norm_cfg: ConfigType = dict(type='BN',
                                              momentum=0.03,
                                              eps=0.001),
-                 init_cfg: OptMultiConfig = None) -> None:
+                 init_cfg: OptMultiConfig = None,
+                 use_einsum: bool = True) -> None:
         super().__init__(init_cfg=init_cfg)
         conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
 
@@ -38,6 +39,7 @@ class MaxSigmoidAttnBlock(BaseModule):
             'out_channels and embed_channels should be divisible by num_heads.'
         self.num_heads = num_heads
         self.head_channels = out_channels // num_heads
+        self.use_einsum = use_einsum
 
         self.embed_conv = ConvModule(
             in_channels,
@@ -71,7 +73,17 @@ class MaxSigmoidAttnBlock(BaseModule):
         embed = self.embed_conv(x) if self.embed_conv is not None else x
         embed = embed.reshape(B, self.num_heads, self.head_channels, H, W)
 
-        attn_weight = torch.einsum('bmchw,bnmc->bmhwn', embed, guide)
+        if self.use_einsum:
+            attn_weight = torch.einsum('bmchw,bnmc->bmhwn', embed, guide)
+        else:
+            batch, m, channel, height, width = embed.shape
+            _, n, _, _ = guide.shape
+            embed = embed.permute(0, 1, 3, 4, 2)
+            embed = embed.reshape(batch, m, -1, channel)
+            guide = guide.permute(0, 2, 3, 1)
+            attn_weight = torch.matmul(embed, guide)
+            attn_weight = attn_weight.reshape(batch, m, height, width, n)
+
         attn_weight = attn_weight.max(dim=-1)[0]
         attn_weight = attn_weight / (self.head_channels**0.5)
         attn_weight = attn_weight + self.bias[None, :, None, None]
@@ -101,7 +113,8 @@ class MaxSigmoidCSPLayerWithTwoConv(CSPLayerWithTwoConv):
             conv_cfg: OptConfigType = None,
             norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-            init_cfg: OptMultiConfig = None) -> None:
+            init_cfg: OptMultiConfig = None,
+            use_einsum: bool = True) -> None:
         super().__init__(in_channels=in_channels,
                          out_channels=out_channels,
                          expand_ratio=expand_ratio,
@@ -126,7 +139,8 @@ class MaxSigmoidCSPLayerWithTwoConv(CSPLayerWithTwoConv):
                                               num_heads=num_heads,
                                               with_scale=with_scale,
                                               conv_cfg=conv_cfg,
-                                              norm_cfg=norm_cfg)
+                                              norm_cfg=norm_cfg,
+                                              use_einsum=use_einsum)
 
     def forward(self, x: Tensor, guide: Tensor) -> Tensor:
         """Forward process."""
