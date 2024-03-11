@@ -35,18 +35,32 @@ class ContrastiveHead(BaseModule):
     """
     def __init__(self,
                  embed_dims: int,
-                 init_cfg: OptConfigType = None) -> None:
+                 init_cfg: OptConfigType = None,
+                 use_einsum: bool = True) -> None:
 
         super().__init__(init_cfg=init_cfg)
 
         self.bias = nn.Parameter(torch.zeros([]))
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+        self.use_einsum = use_einsum
 
     def forward(self, x: Tensor, w: Tensor) -> Tensor:
         """Forward function of contrastive learning."""
         x = F.normalize(x, dim=1, p=2)
         w = F.normalize(w, dim=-1, p=2)
-        x = torch.einsum('bchw,bkc->bkhw', x, w)
+
+        if self.use_einsum:
+            x = torch.einsum('bchw,bkc->bkhw', x, w)
+        else:
+            batch, channel, height, width = x.shape
+            _, k, _ = w.shape
+            x = x.permute(0, 2, 3, 1) # bchw->bhwc
+            x = x.reshape(batch, -1, channel) # bhwc->b(hw)c
+            w = w.permute(0, 2, 1) # bkc->bck
+            x = torch.matmul(x, w)
+            x = x.reshape(batch, height, width, k)
+            x = x.permute(0, 3, 1, 2)
+        
         x = x * self.logit_scale.exp() + self.bias
         return x
 
@@ -62,19 +76,33 @@ class BNContrastiveHead(BaseModule):
     def __init__(self,
                  embed_dims: int,
                  norm_cfg: ConfigDict,
-                 init_cfg: OptConfigType = None) -> None:
+                 init_cfg: OptConfigType = None,
+                 use_einsum: bool = True) -> None:
 
         super().__init__(init_cfg=init_cfg)
         self.norm = build_norm_layer(norm_cfg, embed_dims)[1]
         self.bias = nn.Parameter(torch.zeros([]))
         # use -1.0 is more stable
         self.logit_scale = nn.Parameter(-1.0 * torch.ones([]))
+        self.use_einsum = use_einsum
 
     def forward(self, x: Tensor, w: Tensor) -> Tensor:
         """Forward function of contrastive learning."""
         x = self.norm(x)
         w = F.normalize(w, dim=-1, p=2)
-        x = torch.einsum('bchw,bkc->bkhw', x, w)
+
+        if self.use_einsum:
+            x = torch.einsum('bchw,bkc->bkhw', x, w)
+        else:
+            batch, channel, height, width = x.shape
+            _, k, _ = w.shape
+            x = x.permute(0, 2, 3, 1) # bchw->bhwc
+            x = x.reshape(batch, -1, channel) # bhwc->b(hw)c
+            w = w.permute(0, 2, 1) # bkc->bck
+            x = torch.matmul(x, w)
+            x = x.reshape(batch, height, width, k)
+            x = x.permute(0, 3, 1, 2)
+
         x = x * self.logit_scale.exp() + self.bias
         return x
 
@@ -92,9 +120,11 @@ class YOLOWorldHeadModule(YOLOv8HeadModule):
                  *args,
                  embed_dims: int,
                  use_bn_head: bool = False,
+                 use_einsum: bool = True,
                  **kwargs) -> None:
         self.embed_dims = embed_dims
         self.use_bn_head = use_bn_head
+        self.use_einsum = use_einsum
         super().__init__(*args, **kwargs)
 
     def init_weights(self, prior_prob=0.01):
@@ -161,9 +191,9 @@ class YOLOWorldHeadModule(YOLOv8HeadModule):
                               kernel_size=1)))
             if self.use_bn_head:
                 self.cls_contrasts.append(
-                    BNContrastiveHead(self.embed_dims, self.norm_cfg))
+                    BNContrastiveHead(self.embed_dims, self.norm_cfg, use_einsum=self.use_einsum))
             else:
-                self.cls_contrasts.append(ContrastiveHead(self.embed_dims))
+                self.cls_contrasts.append(ContrastiveHead(self.embed_dims, use_einsum=self.use_einsum))
 
         proj = torch.arange(self.reg_max, dtype=torch.float)
         self.register_buffer('proj', proj, persistent=False)
