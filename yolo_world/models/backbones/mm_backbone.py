@@ -197,12 +197,15 @@ class MultiModalYOLOBackbone(BaseModule):
                  image_model: ConfigType,
                  text_model: ConfigType,
                  frozen_stages: int = -1,
+                 with_text_model: bool = True,
                  init_cfg: OptMultiConfig = None) -> None:
-
         super().__init__(init_cfg)
-
+        self.with_text_model = with_text_model
         self.image_model = MODELS.build(image_model)
-        self.text_model = MODELS.build(text_model)
+        if self.with_text_model:
+            self.text_model = MODELS.build(text_model)
+        else:
+            self.text_model = None
         self.frozen_stages = frozen_stages
         self._freeze_stages()
 
@@ -225,5 +228,8 @@ class MultiModalYOLOBackbone(BaseModule):
     def forward(self, image: Tensor,
                 text: List[List[str]]) -> Tuple[Tuple[Tensor], Tensor]:
         img_feats = self.image_model(image)
-        txt_feats = self.text_model(text)
-        return img_feats, txt_feats
+        if self.with_text_model:
+            txt_feats = self.text_model(text)
+            return img_feats, txt_feats
+        else:
+            return img_feats, None
