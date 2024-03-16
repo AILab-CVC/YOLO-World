@@ -11,53 +11,50 @@ save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 2e-4
+base_lr = 2e-3
 weight_decay = 0.05
 train_batch_size_per_gpu = 16
-load_from = 'pretrained_models/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth'
-# huggingface text model
-text_model_name = 'openai/clip-vit-base-patch32'
+load_from = 'pretrained_models/yolo_world_l_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_cc3mlite_train-ca93cd1f.pth'
 persistent_workers = False
 
 # model settings
-model = dict(
-    type='YOLOWorldDetector',
-    mm_neck=True,
-    num_train_classes=num_training_classes,
-    num_test_classes=num_classes,
-    data_preprocessor=dict(type='YOLOWDetDataPreprocessor'),
-    backbone=dict(
-        _delete_=True,
-        type='MultiModalYOLOBackbone',
-        image_model={{_base_.model.backbone}},
-        text_model=dict(
-            type='HuggingCLIPLanguageBackbone',
-            model_name=text_model_name,
-            frozen_modules=['all'])),
-    neck=dict(type='YOLOWorldPAFPN',
-              guide_channels=text_channels,
-              embed_channels=neck_embed_channels,
-              num_heads=neck_num_heads,
-              block_cfg=dict(type='EfficientCSPLayerWithTwoConv')),
-    bbox_head=dict(type='YOLOWorldHead',
-                   head_module=dict(type='YOLOWorldHeadModule',
-                                    embed_dims=text_channels,
-                                    num_classes=num_training_classes)),
-    train_cfg=dict(assigner=dict(num_classes=num_training_classes)))
+model = dict(type='YOLOWorldPromptDetector',
+             mm_neck=True,
+             num_train_classes=num_training_classes,
+             num_test_classes=num_classes,
+             embedding_path='embeddings/clip_vit_b32_coco_80_embeddings.npy',
+             prompt_dim=text_channels,
+             num_prompts=80,
+             data_preprocessor=dict(type='YOLOv5DetDataPreprocessor'),
+             backbone=dict(_delete_=True,
+                           type='MultiModalYOLOBackbone',
+                           text_model=None,
+                           image_model={{_base_.model.backbone}},
+                           frozen_stages=4,
+                           with_text_model=False),
+             neck=dict(type='YOLOWorldPAFPN',
+                       freeze_all=True,
+                       guide_channels=text_channels,
+                       embed_channels=neck_embed_channels,
+                       num_heads=neck_num_heads,
+                       block_cfg=dict(type='MaxSigmoidCSPLayerWithTwoConv')),
+             bbox_head=dict(type='YOLOWorldHead',
+                            head_module=dict(
+                                type='YOLOWorldHeadModule',
+                                freeze_all=True,
+                                use_bn_head=True,
+                                embed_dims=text_channels,
+                                num_classes=num_training_classes)),
+             train_cfg=dict(assigner=dict(num_classes=num_training_classes)))
 
 # dataset settings
-text_transform = [
-    dict(type='RandomLoadText',
-         num_neg_samples=(num_classes, num_classes),
-         max_num_samples=num_training_classes,
-         padding_to_max=True,
-         padding_value=''),
+final_transform = [
     dict(type='mmdet.PackDetInputs',
          meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
-                    'flip_direction', 'texts'))
+                    'flip_direction'))
 ]
 mosaic_affine_transform = [
-    dict(type='MultiModalMosaic',
+    dict(type='Mosaic',
          img_scale=_base_.img_scale,
          pad_val=114.0,
          pre_transform=_base_.pre_transform),
@@ -76,23 +73,25 @@ mosaic_affine_transform = [
 ]
 train_pipeline = [
     *_base_.pre_transform, *mosaic_affine_transform,
-    dict(type='YOLOv5MultiModalMixUp',
+    dict(type='YOLOv5MixUp',
          prob=_base_.mixup_prob,
          pre_transform=[*_base_.pre_transform, *mosaic_affine_transform]),
-    *_base_.last_transform[:-1], *text_transform
+    *_base_.last_transform[:-1], *final_transform
 ]
-train_pipeline_stage2 = [*_base_.train_pipeline_stage2[:-1], *text_transform]
-coco_train_dataset = dict(_delete_=True,
-                          type='MultiModalDataset',
-                          dataset=dict(
-                              type='YOLOv5CocoDataset',
-                              data_root='data/coco',
-                              ann_file='annotations/instances_train2017.json',
-                              data_prefix=dict(img='train2017/'),
-                              filter_cfg=dict(filter_empty_gt=False,
-                                              min_size=32)),
-                          class_text_path='data/texts/coco_class_texts.json',
+
+train_pipeline_stage2 = [*_base_.train_pipeline_stage2[:-1], *final_transform]
+
+coco_train_dataset = dict(type='YOLOv5CocoDataset',
+                          data_root='data/coco',
+                          ann_file='annotations/instances_train2017.json',
+                          data_prefix=dict(img='train2017/'),
+                          filter_cfg=dict(filter_empty_gt=False, min_size=32),
                           pipeline=train_pipeline)
+
+train_dataloader = dict(persistent_workers=persistent_workers,
+                        batch_size=train_batch_size_per_gpu,
+                        collate_fn=dict(type='yolow_collate'),
+                        dataset=coco_train_dataset)
 
 train_dataloader = dict(persistent_workers=persistent_workers,
                         batch_size=train_batch_size_per_gpu,
@@ -100,21 +99,17 @@ train_dataloader = dict(persistent_workers=persistent_workers,
                         dataset=coco_train_dataset)
 test_pipeline = [
     *_base_.test_pipeline[:-1],
-    dict(type='LoadText'),
     dict(type='mmdet.PackDetInputs',
          meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                    'scale_factor', 'pad_param', 'texts'))
+                    'scale_factor', 'pad_param'))
 ]
-coco_val_dataset = dict(
-    _delete_=True,
-    type='MultiModalDataset',
-    dataset=dict(type='YOLOv5CocoDataset',
-                 data_root='data/coco',
-                 ann_file='annotations/instances_val2017.json',
-                 data_prefix=dict(img='val2017/'),
-                 filter_cfg=dict(filter_empty_gt=False, min_size=32)),
-    class_text_path='data/texts/coco_class_texts.json',
-    pipeline=test_pipeline)
+coco_val_dataset = dict(type='YOLOv5CocoDataset',
+                        data_root='data/coco',
+                        ann_file='annotations/instances_val2017.json',
+                        data_prefix=dict(img='val2017/'),
+                        filter_cfg=dict(filter_empty_gt=False, min_size=32),
+                        pipeline=test_pipeline)
+
 val_dataloader = dict(dataset=coco_val_dataset)
 test_dataloader = val_dataloader
 # training settings
@@ -151,6 +146,8 @@ optim_wrapper = dict(optimizer=dict(
                                             'backbone.text_model':
                                             dict(lr_mult=0.01),
                                             'logit_scale':
+                                            dict(weight_decay=0.0),
+                                            'embeddings':
                                             dict(weight_decay=0.0)
                                         }),
                      constructor='YOLOWv5OptimizerConstructor')
@@ -161,3 +158,4 @@ val_evaluator = dict(_delete_=True,
                      proposal_nums=(100, 1, 10),
                      ann_file='data/coco/annotations/instances_val2017.json',
                      metric='bbox')
+find_unused_parameters = True

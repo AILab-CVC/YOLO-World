@@ -9,6 +9,7 @@ import mmengine
 import torch.multiprocessing as mp
 from torch.multiprocessing import Process, set_start_method
 
+
 from mmdeploy.apis import (create_calib_input_data, extract_model,
                            get_predefined_partition_cfg, torch2onnx,
                            torch2torchscript, visualize_model)
