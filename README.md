@@ -51,18 +51,18 @@
 
 ## TODO
 
-YOLO-World is under active development and please stay tuned ☕️!
+YOLO-World is under active development and please stay tuned ☕️! 
+If you have suggestions📃 or ideas💡,**we would love for you to bring them up in the [Roadmap](https://github.com/AILab-CVC/YOLO-World/issues/109)** ❤️!
+> YOLO-World 目前正在积极开发中📃，如果你有建议或者想法💡，我们非常希望您在 [Roadmap](https://github.com/AILab-CVC/YOLO-World/issues/109) 中提出来❤️！
 
-- [x] Gradio demo!
-- [x] Complete documents for pre-training YOLO-World.
-- [x] COCO & LVIS fine-tuning.
-- [x] Extra pre-trained models on more data, such as CC3M.
-- [x] Deployment toolkits, e.g., ONNX or TensorRT. 
-- [ ] Inference acceleration and scripts for speed evaluation.
-- [ ] Automatic labeling framework for image-text pairs, such as CC3M.
+## FAQ (Frequently Asked Questions)
+
+We have set up an FAQ about YOLO-World in the discussion on GitHub. We hope everyone can raise issues or solutions during use here, and we also hope that everyone can quickly find solutions from it.
+
+> 我们在GitHub的discussion中建立了关于YOLO-World的常见问答，这里将收集一些常见问题，同时大家可以在此提出使用中的问题或者解决方案，也希望大家能够从中快速寻找到解决方案
 
 
-## Highlights
+## Highlights & Introduction
 
 This repo contains the PyTorch implementation, pre-trained weights, and pre-training/fine-tuning code for YOLO-World.
 
@@ -77,13 +77,7 @@ This repo contains the PyTorch implementation, pre-trained weights, and pre-trai
 <img width=800px src="./assets/yolo_arch.png">
 </center>
 
-
-## Abstract
-
-The You Only Look Once (YOLO) series of detectors have established themselves as efficient and practical tools. However, their reliance on predefined and trained object categories limits their applicability in open scenarios. Addressing this limitation, we introduce YOLO-World, an innovative approach that enhances YOLO with open-vocabulary detection capabilities through vision-language modeling and pre-training on large-scale datasets. Specifically, we propose a new Re-parameterizable Vision-Language Path Aggregation Network (RepVL-PAN) and region-text contrastive loss to facilitate the interaction between visual and linguistic information. Our method excels in detecting a wide range of objects in a zero-shot manner with high efficiency. On the challenging LVIS dataset, YOLO-World achieves 35.4 AP with 52.0 FPS on V100, which outperforms many state-of-the-art methods in terms of both accuracy and speed. Furthermore, the fine-tuned YOLO-World achieves remarkable performance on several downstream tasks, including object detection and open-vocabulary instance segmentation.
-
-
-## Main Results
+## Model Zoo
 
 We've pre-trained YOLO-World-S/M/L from scratch and evaluate on the `LVIS val-1.0` and `LVIS minival`. We provide the pre-trained model weights and training logs for applications/research or re-producing the results.
 
@@ -104,9 +98,8 @@ We've pre-trained YOLO-World-S/M/L from scratch and evaluate on the `LVIS val-1.
 | [YOLO-Worldv2-X](./configs/pretrain/yolo_world_v2_x_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) 🔥  | O365+GoldG+CC3M-Lite | 640 | 35.4 | 28.7 | 32.9 | 38.7 | 28.4 | 20.6 | 25.6 | 35.0 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_x_obj365v1_goldg_cc3mlite_pretrain-8698fbfa.pth) |
 
 **NOTE:**
-1. The evaluation results of AP<sup>fixed</sup> are tested on LVIS `minival` with [fixed AP](https://github.com/achalddave/large-vocab-devil).
-2. The evaluation results of AP<sup>mini</sup> are tested on LVIS `minival`.
-3. The evaluation results of AP<sup>val</sup> are tested on LVIS `val 1.0`.
+1. AP<sup>mini</sup>: evaluated on LVIS `minival`.
+3. AP<sup>val</sup>: evaluated on LVIS `val 1.0`.
 4. [HuggingFace Mirror](https://hf-mirror.com/) provides the mirror of HuggingFace, which is a choice for users who are unable to reach.
 5. &#x1F538;: fine-tuning models with the pre-trained data.
 
