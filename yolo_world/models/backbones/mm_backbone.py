@@ -13,6 +13,7 @@ from transformers import CLIPTextModelWithProjection as CLIPTP
 
 @MODELS.register_module()
 class HuggingVisionBackbone(BaseModule):
+
     def __init__(self,
                  model_name: str,
                  out_indices: Sequence[int] = (0, 1, 2, 3),
@@ -57,6 +58,7 @@ class HuggingVisionBackbone(BaseModule):
 
 @MODELS.register_module()
 class HuggingCLIPLanguageBackbone(BaseModule):
+
     def __init__(self,
                  model_name: str,
                  frozen_modules: Sequence[str] = (),
@@ -74,41 +76,21 @@ class HuggingCLIPLanguageBackbone(BaseModule):
         self.model = CLIPTP.from_pretrained(model_name, config=clip_config)
         self._freeze_modules()
 
-    def forward_cache(self, text: List[List[str]]) -> Tensor:
-        if not hasattr(self, "cache"):
-            self.cache = self.forward_text(text)
-        return self.cache
-
-    def forward(self, text: List[List[str]]) -> Tensor:
-        if self.training:
-            return self.forward_text(text)
-        else:
-            return self.forward_cache(text)
-
     def forward_tokenizer(self, texts):
         if not hasattr(self, 'text'):
             text = list(itertools.chain(*texts))
-            # print(text)
-            # # text = ['a photo of {}'.format(x) for x in text]
             text = self.tokenizer(text=text, return_tensors='pt', padding=True)
-            # print(text)
             self.text = text.to(device=self.model.device)
         return self.text
 
-    def forward_text(self, text: List[List[str]]) -> Tensor:
+    def forward(self, text: List[List[str]]) -> Tensor:
         num_per_batch = [len(t) for t in text]
         assert max(num_per_batch) == min(num_per_batch), (
             'number of sequences not equal in batch')
-        # print(max([[len(t.split(' ')) for t in tt] for tt in text]))
-        # print(num_per_batch, max(num_per_batch))
         text = list(itertools.chain(*text))
-        # print(text)
-        # text = ['a photo of {}'.format(x) for x in text]
-        # text = self.forward_tokenizer(text)
         text = self.tokenizer(text=text, return_tensors='pt', padding=True)
         text = text.to(device=self.model.device)
         txt_outputs = self.model(**text)
-        # txt_feats = txt_outputs.last_hidden_state[:, 0, :]
         txt_feats = txt_outputs.text_embeds
         txt_feats = txt_feats / txt_feats.norm(p=2, dim=-1, keepdim=True)
         txt_feats = txt_feats.reshape(-1, num_per_batch[0],
@@ -146,6 +128,7 @@ class PseudoLanguageBackbone(BaseModule):
     Args:
         text_embed_path (str): path to the text embedding file
     """
+
     def __init__(self,
                  text_embed_path: str = "",
                  test_embed_path: str = None,
@@ -193,6 +176,7 @@ class PseudoLanguageBackbone(BaseModule):
 
 @MODELS.register_module()
 class MultiModalYOLOBackbone(BaseModule):
+
     def __init__(self,
                  image_model: ConfigType,
                  text_model: ConfigType,
@@ -233,3 +217,11 @@ class MultiModalYOLOBackbone(BaseModule):
             return img_feats, txt_feats
         else:
             return img_feats, None
+
+    def forward_text(self, text: List[List[str]]) -> Tensor:
+        assert self.with_text_model, "forward_text() requires a text model"
+        txt_feats = self.text_model(text)
+        return txt_feats
+
+    def forward_image(self, image: Tensor) -> Tuple[Tensor]:
+        return self.image_model(image)

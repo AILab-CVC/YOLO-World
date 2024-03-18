@@ -15,10 +15,11 @@ base_lr = 2e-4
 
 weight_decay = 0.05
 train_batch_size_per_gpu = 8
-load_from = 'pretrained_models/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth'
+load_from = 'pretrained_models/yolo_world_l_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_cc3mlite_train-ca93cd1f.pth'
+# text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
+text_model_name = 'openai/clip-vit-base-patch32'
 persistent_workers = False
-text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
-# text_model_name = 'openai/clip-vit-base-patch32'
+
 # Polygon2Mask
 downsample_ratio = 4
 mask_overlap = False
@@ -37,30 +38,33 @@ model = dict(
         _delete_=True,
         type='MultiModalYOLOBackbone',
         image_model={{_base_.model.backbone}},
+        frozen_stages=4,  # frozen the image backbone
         text_model=dict(
             type='HuggingCLIPLanguageBackbone',
             model_name=text_model_name,
-            frozen_modules=[])),
-    neck=dict(type='YOLOWorldDualPAFPN',
+            frozen_modules=['all'])),
+    neck=dict(type='YOLOWorldPAFPN',
+              freeze_all=True,
               guide_channels=text_channels,
               embed_channels=neck_embed_channels,
               num_heads=neck_num_heads,
-              block_cfg=dict(type='MaxSigmoidCSPLayerWithTwoConv'),
-              text_enhancder=dict(type='ImagePoolingAttentionModule',
-                                  embed_channels=256,
-                                  num_heads=8)),
+              block_cfg=dict(type='MaxSigmoidCSPLayerWithTwoConv')),
     bbox_head=dict(type='YOLOWorldSegHead',
                    head_module=dict(type='YOLOWorldSegHeadModule',
+                                    use_bn_head=True,
                                     embed_dims=text_channels,
                                     num_classes=num_training_classes,
                                     mask_channels=32,
-                                    proto_channels=256),
+                                    proto_channels=256,
+                                    freeze_bbox=True),
                    mask_overlap=mask_overlap,
                    loss_mask=dict(type='mmdet.CrossEntropyLoss',
                                   use_sigmoid=True,
                                   reduction='none'),
                    loss_mask_weight=1.0),
-    train_cfg=dict(assigner=dict(num_classes=num_training_classes)),
+    train_cfg=dict(assigner=dict(
+        type='YOLOWorldSegAssigner',
+        num_classes=num_training_classes)),
     test_cfg=dict(mask_thr_binary=0.5, fast_test=True))
 
 pre_transform = [
@@ -202,6 +206,14 @@ optim_wrapper = dict(optimizer=dict(
                                             dict(lr_mult=0.01),
                                             'logit_scale':
                                             dict(weight_decay=0.0),
+                                            'neck':
+                                            dict(lr_mult=0.0),
+                                            'head.head_module.reg_preds':
+                                            dict(lr_mult=0.0),
+                                            'head.head_module.cls_preds':
+                                            dict(lr_mult=0.0),
+                                            'head.head_module.cls_contrasts':
+                                            dict(lr_mult=0.0)
                                         }),
                      constructor='YOLOWv5OptimizerConstructor')
 
@@ -215,7 +227,7 @@ coco_val_dataset = dict(
                  ann_file='lvis/lvis_v1_val.json',
                  data_prefix=dict(img=''),
                  batch_shapes_cfg=None),
-    class_text_path='data/captions/lvis_v1_class_captions.json',
+    class_text_path='data/texts/lvis_v1_class_texts.json',
     pipeline=test_pipeline)
 val_dataloader = dict(dataset=coco_val_dataset)
 test_dataloader = val_dataloader

@@ -204,7 +204,7 @@ You can directly download the ONNX model through the online [demo](https://huggi
 We provide the [Gradio](https://www.gradio.app/) demo for local devices:
 
 ```bash
-pip install gradio
+pip install gradio==4.16.0
 python demo.py path/to/config path/to/weights
 ```
 

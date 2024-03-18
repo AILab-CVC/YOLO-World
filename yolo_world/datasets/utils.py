@@ -25,7 +25,7 @@ def yolow_collate(data_batch: Sequence,
         gt_bboxes = datasamples.gt_instances.bboxes.tensor
         gt_labels = datasamples.gt_instances.labels
         if 'masks' in datasamples.gt_instances:
-            masks = datasamples.gt_instances.masks.to_tensor(
+            masks = datasamples.gt_instances.masks.to(
                 dtype=torch.bool, device=gt_bboxes.device)
             batch_masks.append(masks)
         batch_idx = gt_labels.new_full((len(gt_labels), 1), i)

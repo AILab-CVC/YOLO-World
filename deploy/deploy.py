@@ -9,16 +9,16 @@ import mmengine
 import torch.multiprocessing as mp
 from torch.multiprocessing import Process, set_start_method
 
-
-from mmdeploy.apis import (create_calib_input_data, extract_model,
-                           get_predefined_partition_cfg, torch2onnx,
-                           torch2torchscript, visualize_model)
-from mmdeploy.apis.core import PIPELINE_MANAGER
-from mmdeploy.apis.utils import to_backend
-from mmdeploy.backend.sdk.export_info import export2SDK
-from mmdeploy.utils import (IR, Backend, get_backend, get_calib_filename,
-                            get_ir_config, get_partition_config,
-                            get_root_logger, load_config, target_wrapper)
+# from mmdeploy.apis import (create_calib_input_data, extract_model,
+#                            get_predefined_partition_cfg, torch2onnx,
+#                            torch2torchscript, visualize_model)
+# from mmdeploy.apis.core import PIPELINE_MANAGER
+# from mmdeploy.apis.utils import to_backend
+# from mmdeploy.backend.sdk.export_info import export2SDK
+# from mmdeploy.utils import (IR, Backend, get_backend, get_calib_filename,
+#                             get_ir_config, get_partition_config,
+#                             get_root_logger, load_config, target_wrapper)
+# from .easydeploy.model import DeployModel, MMYOLOBackend
 
 
 def parse_args():

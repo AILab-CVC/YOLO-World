@@ -115,3 +115,5 @@ It's easy:
 | YOLO-World-S | ✔️ | 45.9 | 62.3 | 50.1 | [comming]() |
 | YOLO-World-M | ✔️ | 51.2 | 68.1 | 55.9 | [comming]() |
 | [YOLO-World-L](./../configs/finetune_coco/yolo_world_l_efficient_neck_2e-4_80e_8gpus_finetune_coco.py) | ✔️ | 53.3 | 70.1 | 58.2 | [comming]() |
+
+

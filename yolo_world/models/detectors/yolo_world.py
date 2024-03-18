@@ -53,6 +53,11 @@ class YOLOWorldDetector(YOLODetector):
             batch_data_samples, results_list)
         return batch_data_samples
 
+    def reparameterize(self, texts: List[List[str]]) -> None:
+        # encode text embeddings into the detector
+        self.texts = texts
+        self.text_feats = self.backbone.forward_text(texts)
+
     def _forward(
             self,
             batch_inputs: Tensor,
@@ -69,14 +74,21 @@ class YOLOWorldDetector(YOLODetector):
             self, batch_inputs: Tensor,
             batch_data_samples: SampleList) -> Tuple[Tuple[Tensor], Tensor]:
         """Extract features."""
-        if isinstance(batch_data_samples, dict):
+        txt_feats = None
+        if batch_data_samples is None:
+            texts = self.texts
+            txt_feats = self.text_feats
+        elif isinstance(batch_data_samples, dict):
             texts = batch_data_samples['texts']
         elif isinstance(batch_data_samples, list):
             texts = [data_sample.texts for data_sample in batch_data_samples]
         else:
             raise TypeError('batch_data_samples should be dict or list.')
-
-        img_feats, txt_feats = self.backbone(batch_inputs, texts)
+        if txt_feats is not None:
+            # forward image only
+            img_feats = self.backbone.forward_image(batch_inputs)
+        else:
+            img_feats, txt_feats = self.backbone(batch_inputs, texts)
         if self.with_neck:
             if self.mm_neck:
                 img_feats = self.neck(img_feats, txt_feats)
