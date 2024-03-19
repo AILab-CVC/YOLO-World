@@ -21,7 +21,7 @@ python demo.py path/to/config path/to/weights
 You can also use [`export_onnx.py`](../deploy/export_onnx.py) to obtain the ONNX model. You might specify the `--custom-text` with your own `Text JSON` for your custom prompts. The format of `Text JSON` can be found in [`docs/data`](../docs/data.md).
 
 ```bash
-python deploy/export_onnx.py path/to/config path/to/weights --custom-text path/to/customtexts --opset 11
+PYTHONPATH=./ python deploy/export_onnx.py path/to/config path/to/weights --custom-text path/to/customtexts --opset 11
 ```
 
 
