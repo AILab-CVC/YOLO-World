@@ -119,9 +119,10 @@ class DeployModel(nn.Module):
         flatten_stride = torch.cat(mlvl_strides)
 
         # flatten cls_scores, bbox_preds and objectness
+        # using score.shape
+        text_len = cls_scores[0].shape[1]
         flatten_cls_scores = [
-            cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
-                                                  self.num_classes)
+            cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1, text_len)
             for cls_score in cls_scores
         ]
         cls_scores = torch.cat(flatten_cls_scores, dim=1).sigmoid()
