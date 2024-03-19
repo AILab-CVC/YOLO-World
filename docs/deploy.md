@@ -5,7 +5,7 @@ We provide several ways to deploy YOLO-World with ONNX or TensorRT
 ### Priliminaries
 
 ```bash
-pip install supervision onnx onnxruntim onnxsim
+pip install supervision onnx onnxruntime onnxsim
 ```
 
 ### Export ONNX on Gradio Demo
