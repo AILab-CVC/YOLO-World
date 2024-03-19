@@ -36,12 +36,14 @@ model = dict(
               guide_channels=text_channels,
               embed_channels=neck_embed_channels,
               num_heads=neck_num_heads,
-              block_cfg=dict(type='MaxSigmoidCSPLayerWithTwoConv')),
+              block_cfg=dict(type='MaxSigmoidCSPLayerWithTwoConv',
+                             use_einsum=False)),
     bbox_head=dict(type='YOLOWorldHead',
                    head_module=dict(type='YOLOWorldHeadModule',
                                     use_bn_head=True,
                                     embed_dims=text_channels,
-                                    num_classes=num_training_classes)),
+                                    num_classes=num_training_classes,
+                                    use_einsum=False)),
     train_cfg=dict(assigner=dict(num_classes=num_training_classes)))
 
 # dataset settings

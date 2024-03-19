@@ -1,5 +1,5 @@
 _base_ = ('../../third_party/mmyolo/configs/yolov8/'
-          'yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco.py')
+          'yolov8_l_syncbn_fast_8xb16-500e_coco.py')
 custom_imports = dict(imports=['yolo_world'], allow_failed_imports=False)
 
 # hyper-parameters
@@ -25,6 +25,7 @@ model = dict(type='YOLOWorldPromptDetector',
              embedding_path='embeddings/clip_vit_b32_coco_80_embeddings.npy',
              prompt_dim=text_channels,
              num_prompts=80,
+             freeze_prompt=True,
              data_preprocessor=dict(type='YOLOv5DetDataPreprocessor'),
              backbone=dict(_delete_=True,
                            type='MultiModalYOLOBackbone',
@@ -57,7 +58,6 @@ mosaic_affine_transform = [
          img_scale=_base_.img_scale,
          pad_val=114.0,
          pre_transform=_base_.pre_transform),
-    dict(type='YOLOv5CopyPaste', prob=_base_.copypaste_prob),
     dict(
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
@@ -66,9 +66,7 @@ mosaic_affine_transform = [
         scaling_ratio_range=(1 - _base_.affine_scale, 1 + _base_.affine_scale),
         # img_scale is (width, height)
         border=(-_base_.img_scale[0] // 2, -_base_.img_scale[1] // 2),
-        border_val=(114, 114, 114),
-        min_area_ratio=_base_.min_area_ratio,
-        use_mask_refine=_base_.use_mask2refine)
+        border_val=(114, 114, 114))
 ]
 train_pipeline = [
     *_base_.pre_transform, *mosaic_affine_transform,
@@ -92,10 +90,6 @@ train_dataloader = dict(persistent_workers=persistent_workers,
                         collate_fn=dict(type='yolow_collate'),
                         dataset=coco_train_dataset)
 
-train_dataloader = dict(persistent_workers=persistent_workers,
-                        batch_size=train_batch_size_per_gpu,
-                        collate_fn=dict(type='yolow_collate'),
-                        dataset=coco_train_dataset)
 test_pipeline = [
     *_base_.test_pipeline[:-1],
     dict(type='mmdet.PackDetInputs',

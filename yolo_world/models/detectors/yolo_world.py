@@ -133,6 +133,8 @@ class YOLOWorldPromptDetector(YOLODetector):
 
         if self.freeze_prompt:
             self.embeddings.requires_grad = False
+        else:
+            self.embeddings.requires_grad = True
 
         if use_mlp_adapter:
             self.adapter = nn.Sequential(nn.Linear(prompt_dim, prompt_dim * 2),

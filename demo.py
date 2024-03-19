@@ -106,6 +106,7 @@ def run_image(runner,
 
 
 def export_model(runner, text, max_num_boxes, score_thr, nms_thr):
+
     backend = EM.MMYOLOBackend.ONNXRUNTIME
     postprocess_cfg = ConfigDict(pre_top_k=10 * max_num_boxes,
                                  keep_top_k=max_num_boxes,
@@ -113,17 +114,18 @@ def export_model(runner, text, max_num_boxes, score_thr, nms_thr):
                                  score_threshold=score_thr)
 
     base_model = runner.model
+
     texts = [[t.strip() for t in text.split(',')] + [' ']]
     base_model.reparameterize(texts)
     deploy_model = EM.DeployModel(baseModel=base_model,
-                                 backend=backend,
-                                 postprocess_cfg=postprocess_cfg)
+                                  backend=backend,
+                                  postprocess_cfg=postprocess_cfg)
     deploy_model.eval()
 
     device = (next(iter(base_model.parameters()))).device
     fake_input = torch.ones([1, 3, 640, 640], device=device)
     deploy_model(fake_input)
-    print(args.work_dir, args.checkpoint)
+
     save_onnx_path = os.path.join(
         args.work_dir,
         os.path.basename(args.checkpoint).replace('pth', 'onnx'))
@@ -193,8 +195,6 @@ def demo(runner, args):
         submit.click(partial(run_image, runner),
                      [image, input_text, max_num_boxes, score_thr, nms_thr],
                      [output_image])
-        # clear.click(lambda: [[], '', ''], None,
-        #             [image, input_text, output_image])
         clear.click(lambda: [None, '', None], None,
                     [image, input_text, output_image])
 
@@ -202,10 +202,8 @@ def demo(runner, args):
                      [input_text, max_num_boxes, score_thr, nms_thr],
                      [out_download, out_download])
 
-        # demo.launch(server_name='0.0.0.0',
-        #             server_port=8080)  # port 80 does not work for me
         demo.launch(server_name='0.0.0.0',
-                    server_port=60645)  # port 80 does not work for me
+                    server_port=8080)  # port 80 does not work for me
 
 
 if __name__ == '__main__':
