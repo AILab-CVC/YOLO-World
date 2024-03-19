@@ -31,8 +31,8 @@ class MultiModalDataset:
                 f'but got {dataset}')
 
         if class_text_path is not None:
-            self.class_texts = json.load(open(class_text_path, 'r'))
-            # ori_classes = self.dataset.metainfo['classes']
+            # self.class_texts = json.load(open(class_text_path, 'r'))
+            self.class_texts = self.dataset.metainfo['classes']
             # assert len(ori_classes) == len(self.class_texts), \
             #     ('The number of classes in the dataset and the class text'
             #      'file must be the same.')

@@ -97,9 +97,9 @@ coco_train_dataset = dict(
     type='MultiModalDataset',
     dataset=dict(
         type='YOLOv5CocoDataset',
-        data_root='data/coco',
+        data_root='/data/coco',
         ann_file='annotations/instances_train2017.json',
-        data_prefix=dict(img='train2017/'),
+        data_prefix=dict(img='images/train2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/coco_class_texts.json',
     pipeline=train_pipeline)
@@ -122,9 +122,9 @@ coco_val_dataset = dict(
     type='MultiModalDataset',
     dataset=dict(
         type='YOLOv5CocoDataset',
-        data_root='data/coco',
+        data_root='/data/coco',
         ann_file='annotations/instances_val2017.json',
-        data_prefix=dict(img='val2017/'),
+        data_prefix=dict(img='images/val2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/coco_class_texts.json',
     pipeline=test_pipeline)
@@ -177,5 +177,5 @@ val_evaluator = dict(
     _delete_=True,
     type='mmdet.CocoMetric',
     proposal_nums=(100, 1, 10),
-    ann_file='data/coco/annotations/instances_val2017.json',
+    ann_file='/data/coco/annotations/instances_val2017.json',
     metric='bbox')

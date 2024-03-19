@@ -120,7 +120,8 @@ class LoadText:
         texts = []
         for idx, cls_caps in enumerate(class_texts):
             assert len(cls_caps) > 0
-            sel_cls_cap = cls_caps[0]
+            # sel_cls_cap = cls_caps[0]  # FIXME: probably for more than one caption per class?
+            sel_cls_cap = cls_caps
             sel_cls_cap = self.prompt_format.format(sel_cls_cap)
             texts.append(sel_cls_cap)
 

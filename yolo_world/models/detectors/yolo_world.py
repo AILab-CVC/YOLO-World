@@ -73,7 +73,8 @@ class YOLOWorldDetector(YOLODetector):
             texts = [data_sample.texts for data_sample in batch_data_samples]
         else:
             raise TypeError('batch_data_samples should be dict or list.')
-
+        # print(texts)
+        # exit()
         img_feats, txt_feats = self.backbone(batch_inputs, texts)
         if self.with_neck:
             if self.mm_neck:

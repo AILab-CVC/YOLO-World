@@ -3,6 +3,7 @@ import argparse
 import os
 import os.path as osp
 
+import torch
 from mmdet.engine.hooks.utils import trigger_visualization_hook
 from mmengine.config import Config, ConfigDict, DictAction
 from mmengine.evaluator import DumpResults
@@ -10,6 +11,9 @@ from mmengine.runner import Runner
 
 from mmyolo.registry import RUNNERS
 from mmyolo.utils import is_metainfo_lower
+
+from yolo_world import MaxSigmoidAttnBlock, ImagePoolingAttentionModule
+from yolo_world.models.dense_heads.yolo_world_head import ContrastiveHead
 
 
 # TODO: support fuse_conv_bn
@@ -29,8 +33,8 @@ def parse_args():
         '--json-prefix',
         type=str,
         help='the prefix of the output json file without perform evaluation, '
-        'which is useful when you want to format the result to a specific '
-        'format and submit it to the test server')
+             'which is useful when you want to format the result to a specific '
+             'format and submit it to the test server')
     parser.add_argument(
         '--tta',
         action='store_true',
@@ -44,8 +48,8 @@ def parse_args():
     parser.add_argument(
         '--show-dir',
         help='directory where painted images will be saved. '
-        'If specified, it will be automatically saved '
-        'to the work_dir/timestamp/show_dir')
+             'If specified, it will be automatically saved '
+             'to the work_dir/timestamp/show_dir')
     parser.add_argument(
         '--wait-time', type=float, default=2, help='the interval of show (s)')
     parser.add_argument(
@@ -53,11 +57,11 @@ def parse_args():
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+             'in xxx=yyy format will be merged into config file. If the value to '
+             'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+             'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+             'Note that the quotation marks are necessary and that no white space '
+             'is allowed.')
     parser.add_argument(
         '--launcher',
         choices=['none', 'pytorch', 'slurm', 'mpi'],
@@ -143,8 +147,38 @@ def main():
             DumpResults(out_file_path=args.out))
 
     # start testing
-    runner.test()
+    runner.test()  # FIXME: uncomment this
+    print(runner.val_dataloader)
 
 
 if __name__ == '__main__':
+
+    # block = MaxSigmoidAttnBlock(
+    #     in_channels=128,
+    #     out_channels=256,
+    #     guide_channels=100,
+    #     embed_channels=256
+    # )
+    # x1 = torch.rand(1, 128, 64, 64)
+    # t = torch.rand(1, 300, 100)
+    # block(x1, t)
+
+    # block = ImagePoolingAttentionModule(
+    #     image_channels=[128, 192, 224],
+    #     text_channels=100,
+    #     embed_channels=256,
+    # )
+    #
+    # x1 = torch.rand(1, 128, 64, 64)
+    # x2 = torch.rand(1, 192, 32, 32)
+    # x3 = torch.rand(1, 224, 16, 16)
+    # t = torch.rand(1, 300, 100)
+    #
+    # block(t, [x1, x2, x3])
+    # emb = 100
+    # x1 = torch.rand(1, emb, 64, 64)
+    # t = torch.rand(1, 300, emb)
+    # block = ContrastiveHead(emb)
+    # block(x1, t)
+    # exit()
     main()
