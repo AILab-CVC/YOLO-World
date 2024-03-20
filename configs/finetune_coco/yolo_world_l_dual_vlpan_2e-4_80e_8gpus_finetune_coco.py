@@ -126,3 +126,8 @@ optim_wrapper = dict(
 val_evaluator = dict(
     _delete_=True, type="mmdet.CocoMetric", proposal_nums=(100, 1, 10), ann_file="/data/coco/annotations/instances_val2017.json", metric="bbox"
 )
+
+vis_backends = [dict(type="LocalVisBackend"), dict(type="WandbVisBackend", init_kwargs={"project": "yolo-world", "entity": "algo", "name": "finetune_coco"})]
+
+visualizer = dict(type="mmdet.DetLocalVisualizer", vis_backends=vis_backends, name="visualizer")
+log_processor = dict(type="LogProcessor", window_size=50, by_epoch=True)
