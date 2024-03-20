@@ -127,7 +127,9 @@ val_evaluator = dict(
     _delete_=True, type="mmdet.CocoMetric", proposal_nums=(100, 1, 10), ann_file="/data/coco/annotations/instances_val2017.json", metric="bbox"
 )
 
-vis_backends = [dict(type="LocalVisBackend"), dict(type="WandbVisBackend", init_kwargs={"project": "yolo-world", "entity": "algo", "name": "finetune_coco"})]
+vis_backends = [dict(type="LocalVisBackend"), dict(type="WandbVisBackend", init_kwargs={"project": "yolo-world", "entity": "algo", "name": "finetune_coco-2"})]
 
 visualizer = dict(type="mmdet.DetLocalVisualizer", vis_backends=vis_backends, name="visualizer")
 log_processor = dict(type="LogProcessor", window_size=50, by_epoch=True)
+
+randomness = dict(seed=42, diff_rank_seed=True, deterministic=False) # deterministic does not work with the CUBLAS we have installed
