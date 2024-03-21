@@ -57,6 +57,7 @@ text_transform = [
          meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
                     'flip_direction', 'texts'))
 ]
+
 train_pipeline = [
     *_base_.pre_transform,
     dict(type='MultiModalMosaic',
@@ -74,6 +75,7 @@ train_pipeline = [
     *_base_.last_transform[:-1],
     *text_transform,
 ]
+
 train_pipeline_stage2 = [*_base_.train_pipeline_stage2[:-1], *text_transform]
 obj365v1_train_dataset = dict(
     type='MultiModalDataset',
@@ -118,6 +120,7 @@ test_pipeline = [
          meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                     'scale_factor', 'pad_param', 'texts'))
 ]
+
 coco_val_dataset = dict(
     _delete_=True,
     type='MultiModalDataset',

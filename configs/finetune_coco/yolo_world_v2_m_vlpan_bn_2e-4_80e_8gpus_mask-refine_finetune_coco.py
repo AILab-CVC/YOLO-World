@@ -1,6 +1,6 @@
 _base_ = (
     '../../third_party/mmyolo/configs/yolov8/'
-    'yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco.py')
+    'yolov8_m_mask-refine_syncbn_fast_8xb16-500e_coco.py')
 custom_imports = dict(
     imports=['yolo_world'],
     allow_failed_imports=False)
@@ -17,7 +17,7 @@ neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
 base_lr = 2e-4
 weight_decay = 0.05
 train_batch_size_per_gpu = 16
-load_from = 'pretrained_models/yolo_world_l_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_cc3mlite_train-ca93cd1f.pth'
+load_from = 'pretrained_models/yolo_world_m_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_train-c6237d5b.pth'
 # text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
 text_model_name = 'openai/clip-vit-base-patch32'
 persistent_workers = False
