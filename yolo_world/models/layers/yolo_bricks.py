@@ -160,7 +160,8 @@ class ImagePoolingAttentionModule(nn.Module):
                  with_scale: bool = False,
                  num_feats: int = 3,
                  num_heads: int = 8,
-                 pool_size: int = 3):
+                 pool_size: int = 3,
+                 use_einsum: bool = True):
         super().__init__()
 
         self.text_channels = text_channels
@@ -169,7 +170,7 @@ class ImagePoolingAttentionModule(nn.Module):
         self.num_feats = num_feats
         self.head_channels = embed_channels // num_heads
         self.pool_size = pool_size
-
+        self.use_einsum = use_einsum
         if with_scale:
             self.scale = nn.Parameter(torch.tensor([0.]), requires_grad=True)
         else:
@@ -209,12 +210,21 @@ class ImagePoolingAttentionModule(nn.Module):
         q = q.reshape(B, -1, self.num_heads, self.head_channels)
         k = k.reshape(B, -1, self.num_heads, self.head_channels)
         v = v.reshape(B, -1, self.num_heads, self.head_channels)
+        if self.use_einsum:
+            attn_weight = torch.einsum('bnmc,bkmc->bmnk', q, k)
+        else:
+            q = q.permute(0, 2, 1, 3)
+            k = k.permute(0, 2, 3, 1)
+            attn_weight = torch.matmul(q, k)
 
-        attn_weight = torch.einsum('bnmc,bkmc->bmnk', q, k)
         attn_weight = attn_weight / (self.head_channels**0.5)
         attn_weight = F.softmax(attn_weight, dim=-1)
-
-        x = torch.einsum('bmnk,bkmc->bnmc', attn_weight, v)
+        if self.use_einsum:
+            x = torch.einsum('bmnk,bkmc->bnmc', attn_weight, v)
+        else:
+            v = v.permute(0, 2, 1, 3)
+            x = torch.matmul(attn_weight, v)
+            x = x.permute(0, 2, 1, 3)
         x = self.proj(x.reshape(B, -1, self.embed_channels))
         return x * self.scale + text_features
 
