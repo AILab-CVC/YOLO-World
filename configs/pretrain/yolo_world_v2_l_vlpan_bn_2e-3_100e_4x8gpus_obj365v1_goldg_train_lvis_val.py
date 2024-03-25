@@ -1,5 +1,5 @@
 _base_ = ('../../third_party/mmyolo/configs/yolov8/'
-          'yolov8_x_syncbn_fast_8xb16-500e_coco.py')
+          'yolov8_l_syncbn_fast_8xb16-500e_coco.py')
 custom_imports = dict(imports=['yolo_world'],
                       allow_failed_imports=False)
 
@@ -15,8 +15,8 @@ neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
 base_lr = 2e-3
 weight_decay = 0.05 / 2
 train_batch_size_per_gpu = 16
-text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
-# text_model_name = 'openai/clip-vit-base-patch32'
+# text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
+text_model_name = 'openai/clip-vit-base-patch32'
 # model settings
 model = dict(
     type='YOLOWorldDetector',
@@ -122,7 +122,7 @@ coco_val_dataset = dict(
     dataset=dict(type='YOLOv5LVISV1Dataset',
                  data_root='data/coco/',
                  test_mode=True,
-                 ann_file='lvis/lvis_v1_minival_inserted_image_name.json',
+                 ann_file='lvis/lvis_v1_val.json',
                  data_prefix=dict(img=''),
                  batch_shapes_cfg=None),
     class_text_path='data/texts/lvis_v1_class_texts.json',
@@ -131,7 +131,7 @@ val_dataloader = dict(dataset=coco_val_dataset)
 test_dataloader = val_dataloader
 
 val_evaluator = dict(type='mmdet.LVISMetric',
-                     ann_file='data/coco/lvis/lvis_v1_minival_inserted_image_name.json',
+                     ann_file='data/coco/lvis/lvis_v1_val.json',
                      metric='bbox')
 test_evaluator = val_evaluator
 

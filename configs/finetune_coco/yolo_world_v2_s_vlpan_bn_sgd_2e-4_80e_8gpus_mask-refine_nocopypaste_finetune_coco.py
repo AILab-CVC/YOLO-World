@@ -1,6 +1,6 @@
 _base_ = (
     '../../third_party/mmyolo/configs/yolov8/'
-    'yolov8_x_mask-refine_syncbn_fast_8xb16-500e_coco.py')
+    'yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco.py')
 custom_imports = dict(
     imports=['yolo_world'],
     allow_failed_imports=False)
@@ -14,13 +14,15 @@ save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 2e-4
-weight_decay = 0.05
+base_lr = 1e-3
+weight_decay = 0.0005
 train_batch_size_per_gpu = 16
-load_from = 'pretrained_models/yolo_world_x_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_cc250k_train_lviseval-8698fbfa.pth'
+load_from = 'pretrained_models/yolo_world_s_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_train-55b943ea.pth'
 text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
 # text_model_name = 'openai/clip-vit-base-patch32'
 persistent_workers = False
+mixup_prob = 0.15
+copypaste_prob = 0.3
 
 # model settings
 model = dict(
@@ -66,7 +68,6 @@ mosaic_affine_transform = [
         img_scale=_base_.img_scale,
         pad_val=114.0,
         pre_transform=_base_.pre_transform),
-    dict(type='YOLOv5CopyPaste', prob=_base_.copypaste_prob),
     dict(
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
@@ -85,7 +86,7 @@ train_pipeline = [
     *mosaic_affine_transform,
     dict(
         type='YOLOv5MultiModalMixUp',
-        prob=_base_.mixup_prob,
+        prob=mixup_prob,
         pre_transform=[*_base_.pre_transform,
                        *mosaic_affine_transform]),
     *_base_.last_transform[:-1],
@@ -112,7 +113,6 @@ train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     collate_fn=dict(type='yolow_collate'),
     dataset=coco_train_dataset)
-
 test_pipeline = [
     *_base_.test_pipeline[:-1],
     dict(type='LoadText'),
@@ -121,7 +121,6 @@ test_pipeline = [
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor', 'pad_param', 'texts'))
 ]
-
 coco_val_dataset = dict(
     _delete_=True,
     type='MultiModalDataset',
@@ -163,19 +162,14 @@ train_cfg = dict(
     val_interval=5,
     dynamic_intervals=[((max_epochs - close_mosaic_epochs),
                         _base_.val_interval_stage2)])
-optim_wrapper = dict(
-    optimizer=dict(
-        _delete_=True,
-        type='AdamW',
-        lr=base_lr,
-        weight_decay=weight_decay,
-        batch_size_per_gpu=train_batch_size_per_gpu),
-    paramwise_cfg=dict(
-        bias_decay_mult=0.0,
-        norm_decay_mult=0.0,
-        custom_keys={'backbone.text_model': dict(lr_mult=0.01),
-                     'logit_scale': dict(weight_decay=0.0)}),
-    constructor='YOLOWv5OptimizerConstructor')
+optim_wrapper = dict(optimizer=dict(
+    _delete_=True,
+    type='SGD',
+    lr=base_lr,
+    momentum=0.937,
+    nesterov=True,
+    weight_decay=weight_decay,
+    batch_size_per_gpu=train_batch_size_per_gpu))
 
 # evaluation settings
 val_evaluator = dict(

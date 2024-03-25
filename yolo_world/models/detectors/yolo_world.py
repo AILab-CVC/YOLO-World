@@ -43,7 +43,8 @@ class YOLOWorldDetector(YOLODetector):
         img_feats, txt_feats = self.extract_feat(batch_inputs,
                                                  batch_data_samples)
 
-        self.bbox_head.num_classes = txt_feats[0].shape[0]
+        self.bbox_head.num_classes = self.num_test_classes
+        # self.bbox_head.num_classes = txt_feats[0].shape[0]
         results_list = self.bbox_head.predict(img_feats,
                                               txt_feats,
                                               batch_data_samples,
@@ -78,10 +79,13 @@ class YOLOWorldDetector(YOLODetector):
         if batch_data_samples is None:
             texts = self.texts
             txt_feats = self.text_feats
-        elif isinstance(batch_data_samples, dict):
+        elif isinstance(batch_data_samples, dict) and 'texts' in batch_data_samples:
             texts = batch_data_samples['texts']
-        elif isinstance(batch_data_samples, list):
+        elif isinstance(batch_data_samples, list) and hasattr(batch_data_samples[0], 'texts'):
             texts = [data_sample.texts for data_sample in batch_data_samples]
+        elif hasattr(self, 'text_feats'):
+            texts = self.texts
+            txt_feats = self.text_feats
         else:
             raise TypeError('batch_data_samples should be dict or list.')
         if txt_feats is not None:

@@ -1,6 +1,6 @@
 _base_ = (
     '../../third_party/mmyolo/configs/yolov8/'
-    'yolov8_x_mask-refine_syncbn_fast_8xb16-500e_coco.py')
+    'yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco.py')
 custom_imports = dict(
     imports=['yolo_world'],
     allow_failed_imports=False)
@@ -17,7 +17,7 @@ neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
 base_lr = 2e-4
 weight_decay = 0.05
 train_batch_size_per_gpu = 16
-load_from = 'pretrained_models/yolo_world_x_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_cc250k_train_lviseval-8698fbfa.pth'
+load_from = 'pretrained_models/yolo_world_l_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_cc3mlite_train-ca93cd1f.pth'
 text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
 # text_model_name = 'openai/clip-vit-base-patch32'
 persistent_workers = False
@@ -41,7 +41,7 @@ model = dict(
               guide_channels=text_channels,
               embed_channels=neck_embed_channels,
               num_heads=neck_num_heads,
-              block_cfg=dict(type='MaxSigmoidCSPLayerWithTwoConv')),
+              block_cfg=dict(type='EfficientCSPLayerWithTwoConv')),
     bbox_head=dict(type='YOLOWorldHead',
                    head_module=dict(type='YOLOWorldHeadModule',
                                     use_bn_head=True,
@@ -112,7 +112,6 @@ train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     collate_fn=dict(type='yolow_collate'),
     dataset=coco_train_dataset)
-
 test_pipeline = [
     *_base_.test_pipeline[:-1],
     dict(type='LoadText'),
@@ -121,7 +120,6 @@ test_pipeline = [
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor', 'pad_param', 'texts'))
 ]
-
 coco_val_dataset = dict(
     _delete_=True,
     type='MultiModalDataset',

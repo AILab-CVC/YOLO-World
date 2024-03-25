@@ -11,8 +11,8 @@ save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 2e-4
-weight_decay = 0.05
+base_lr = 1e-3
+weight_decay = 0.0005
 train_batch_size_per_gpu = 16
 load_from = 'pretrained_models/yolo_world_l_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_cc3mlite_train-ca93cd1f.pth'
 persistent_workers = False
@@ -94,21 +94,12 @@ train_cfg = dict(max_epochs=max_epochs,
 
 optim_wrapper = dict(optimizer=dict(
     _delete_=True,
-    type='AdamW',
+    type='SGD',
     lr=base_lr,
+    momentum=0.937,
+    nesterov=True,
     weight_decay=weight_decay,
-    batch_size_per_gpu=train_batch_size_per_gpu),
-                     paramwise_cfg=dict(bias_decay_mult=0.0,
-                                        norm_decay_mult=0.0,
-                                        custom_keys={
-                                            'backbone.text_model':
-                                            dict(lr_mult=0.01),
-                                            'logit_scale':
-                                            dict(weight_decay=0.0),
-                                            'embeddings':
-                                            dict(weight_decay=0.0)
-                                        }),
-                     constructor='YOLOWv5OptimizerConstructor')
+    batch_size_per_gpu=train_batch_size_per_gpu))
 
 # evaluation settings
 val_evaluator = dict(_delete_=True,
