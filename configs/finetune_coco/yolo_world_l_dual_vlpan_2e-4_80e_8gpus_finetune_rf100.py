@@ -2,15 +2,15 @@ _base_ = "../../third_party/mmyolo/configs/yolov8/" "yolov8_l_syncbn_fast_8xb16-
 custom_imports = dict(imports=["yolo_world"], allow_failed_imports=False)
 
 # hyper-parameters
-num_classes = 80
-num_training_classes = 80
+num_classes = 8
+num_training_classes = 8
 max_epochs = 80  # Maximum training epochs
 close_mosaic_epochs = 10
 save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 4e-4
+base_lr = 2e-4 * 8.0
 weight_decay = 0.05
 train_batch_size_per_gpu = 16
 load_from = "../checkpoints/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth"
@@ -67,17 +67,19 @@ train_pipeline = [
     *text_transform,
 ]
 train_pipeline_stage2 = [*_base_.train_pipeline_stage2[:-1], *text_transform]
+metainfo = dict(classes=["aquarium", "fish", "jellyfish", "penguin", "puffin", "shark", "starfish", "stingray"], palette=[(220, 20, 60)])
 coco_train_dataset = dict(
     _delete_=True,
     type="MultiModalDataset",
     dataset=dict(
         type="YOLOv5CocoDataset",
-        data_root="/data/coco",
-        ann_file="annotations/instances_train2017.json",
-        data_prefix=dict(img="images/train2017/"),
+        data_root="/data/rf100/aquarium-qlnqy",
+        ann_file="train/_annotations.coco.json",
+        data_prefix=dict(img="train/"),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
+        metainfo=metainfo,
     ),
-    class_text_path="../data/texts/coco_class_texts.json",
+    class_text_path="../data/texts/rf100_aquarium_class_texts.json",
     pipeline=train_pipeline,
 )
 
@@ -94,12 +96,13 @@ coco_val_dataset = dict(
     type="MultiModalDataset",
     dataset=dict(
         type="YOLOv5CocoDataset",
-        data_root="/data/coco",
-        ann_file="annotations/instances_val2017.json",
-        data_prefix=dict(img="images/val2017/"),
+        data_root="/data/rf100/aquarium-qlnqy",
+        ann_file="valid/_annotations.coco.json",
+        data_prefix=dict(img="valid/"),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
+        metainfo=metainfo,
     ),
-    class_text_path="../data/texts/coco_class_texts.json",
+    class_text_path="../data/texts/rf100_aquarium_class_texts.json",
     pipeline=test_pipeline,
 )
 val_dataloader = dict(dataset=coco_val_dataset)
@@ -124,12 +127,15 @@ optim_wrapper = dict(
 
 # evaluation settings
 val_evaluator = dict(
-    _delete_=True, type="mmdet.CocoMetric", proposal_nums=(100, 1, 10), ann_file="/data/coco/annotations/instances_val2017.json", metric="bbox"
+    _delete_=True, type="mmdet.CocoMetric", proposal_nums=(100, 1, 10), ann_file="/data/rf100/aquarium-qlnqy/valid/_annotations.coco.json", metric="bbox"
 )
 
-vis_backends = [dict(type="LocalVisBackend"), dict(type="WandbVisBackend", init_kwargs={"project": "yolo-world", "entity": "algo", "name": "finetune_coco-2"})]
+vis_backends = [
+    dict(type="LocalVisBackend"),
+    dict(type="WandbVisBackend", init_kwargs={"project": "yolo-world", "entity": "algo", "name": "finetune_rf100_aquarium"}),
+]
 
 visualizer = dict(type="mmdet.DetLocalVisualizer", vis_backends=vis_backends, name="visualizer")
-log_processor = dict(type="LogProcessor", window_size=50, by_epoch=True)
+log_processor = dict(type="LogProcessor", window_size=4, by_epoch=True)
 
 randomness = dict(seed=42, diff_rank_seed=True, deterministic=False)  # deterministic does not work with the CUBLAS we have installed
