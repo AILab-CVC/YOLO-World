@@ -16,7 +16,8 @@ base_lr = 2e-4
 weight_decay = 0.025
 train_batch_size_per_gpu = 4
 load_from = "pretrained_models/yolo_world_v2_l_obj365v1_goldg_pretrain-a82b1fe3.pth"
-
+# text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
+text_model_name = 'openai/clip-vit-base-patch32'
 img_scale = (1280, 1280)
 
 # model settings
@@ -32,7 +33,7 @@ model = dict(
         image_model={{_base_.model.backbone}},
         text_model=dict(
             type='HuggingCLIPLanguageBackbone',
-            model_name='openai/clip-vit-base-patch32',
+            model_name=text_model_name,
             frozen_modules=['all'])),
     neck=dict(type='YOLOWorldPAFPN',
               guide_channels=text_channels,
@@ -139,7 +140,7 @@ test_pipeline = [
         allow_scale_up=False,
         pad_val=dict(img=114)),
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
-    dict(type='LoadTextFixed'),
+    dict(type='LoadText'),
     dict(type='mmdet.PackDetInputs',
          meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                     'scale_factor', 'pad_param', 'texts'))

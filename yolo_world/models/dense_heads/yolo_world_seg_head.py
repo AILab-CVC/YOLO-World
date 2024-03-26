@@ -34,12 +34,14 @@ class YOLOWorldSegHeadModule(YOLOv8HeadModule):
                  proto_channels: int,
                  mask_channels: int,
                  freeze_bbox: bool = False,
+                 freeze_all: bool = False,
                  use_bn_head: bool = False,
                  **kwargs) -> None:
-        self.freeze_bbox = freeze_bbox
         self.embed_dims = embed_dims
         self.proto_channels = proto_channels
         self.mask_channels = mask_channels
+        self.freeze_bbox = freeze_bbox
+        self.freeze_all = freeze_all
         self.use_bn_head = use_bn_head
         super().__init__(*args, **kwargs)
 
@@ -70,6 +72,9 @@ class YOLOWorldSegHeadModule(YOLOv8HeadModule):
 
         bbox_norm_cfg = self.norm_cfg
         bbox_norm_cfg['requires_grad'] = not self.freeze_bbox
+        if self.freeze_all:
+            self.norm_cfg['requires_grad'] = False
+            bbox_norm_cfg['requires_grad'] = False
 
         for i in range(self.num_levels):
             self.reg_preds.append(
@@ -144,26 +149,26 @@ class YOLOWorldSegHeadModule(YOLOv8HeadModule):
                                       mask_channels=self.mask_channels,
                                       norm_cfg=self.norm_cfg,
                                       act_cfg=self.act_cfg)
-        if self.freeze_bbox:
-            self.head_norm_eval()
+        if self.freeze_bbox or self.freeze_bbox:
+            self._freeze_all()
 
-    def head_norm_eval(self):
-        for m in self.cls_preds:
-            for q in m.modules():
-                if isinstance(q, _BatchNorm):
-                    q.eval()
-
-        for m in self.reg_preds:
-            for q in m.modules():
-                if isinstance(q, _BatchNorm):
-                    q.eval()
+    def _freeze_all(self):
+        frozen_list = [self.cls_preds, self.reg_preds, self.cls_contrasts]
+        if self.freeze_all:
+            frozen_list.extend([self.proto_pred, self.seg_preds])
+        for module in frozen_list:
+            for m in module.modules():
+                if isinstance(m, _BatchNorm):
+                    m.eval()
+                for param in m.parameters():
+                    param.requires_grad = False
 
     def train(self, mode: bool = True):
         """Convert the model into training mode while keep normalization layer
         frozen."""
         super().train(mode)
-        if self.freeze_bbox:
-            self.head_norm_eval()
+        if self.freeze_bbox or self.freeze_all:
+            self._freeze_all()
 
     def forward(self, img_feats: Tuple[Tensor],
                 txt_feats: Tensor) -> Tuple[List]:

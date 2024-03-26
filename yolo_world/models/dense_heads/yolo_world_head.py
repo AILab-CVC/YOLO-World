@@ -10,15 +10,14 @@ from mmcv.cnn import ConvModule
 from mmengine.config import ConfigDict
 from mmengine.model import BaseModule
 from torch import Tensor
+from torch.nn.modules.batchnorm import _BatchNorm
 
 from mmengine.dist import get_dist_info
 from mmengine.structures import InstanceData
 from mmdet.structures import SampleList
 from mmdet.utils import OptConfigType, InstanceList, OptInstanceList
-from mmdet.models.utils import (
-    multi_apply,
-    unpack_gt_instances,
-    filter_scores_and_topk)
+from mmdet.models.utils import (multi_apply, unpack_gt_instances,
+                                filter_scores_and_topk)
 from mmyolo.registry import MODELS
 from mmyolo.models.dense_heads import YOLOv8HeadModule, YOLOv8Head
 from mmyolo.models.utils import gt_instances_preprocess
@@ -33,20 +32,35 @@ class ContrastiveHead(BaseModule):
     Args:
         embed_dims (int): embed dim of text and image features
     """
+
     def __init__(self,
                  embed_dims: int,
-                 init_cfg: OptConfigType = None) -> None:
+                 init_cfg: OptConfigType = None,
+                 use_einsum: bool = True) -> None:
 
         super().__init__(init_cfg=init_cfg)
 
         self.bias = nn.Parameter(torch.zeros([]))
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+        self.use_einsum = use_einsum
 
     def forward(self, x: Tensor, w: Tensor) -> Tensor:
         """Forward function of contrastive learning."""
         x = F.normalize(x, dim=1, p=2)
         w = F.normalize(w, dim=-1, p=2)
-        x = torch.einsum('bchw,bkc->bkhw', x, w)
+
+        if self.use_einsum:
+            x = torch.einsum('bchw,bkc->bkhw', x, w)
+        else:
+            batch, channel, height, width = x.shape
+            _, k, _ = w.shape
+            x = x.permute(0, 2, 3, 1)  # bchw->bhwc
+            x = x.reshape(batch, -1, channel)  # bhwc->b(hw)c
+            w = w.permute(0, 2, 1)  # bkc->bck
+            x = torch.matmul(x, w)
+            x = x.reshape(batch, height, width, k)
+            x = x.permute(0, 3, 1, 2)
+
         x = x * self.logit_scale.exp() + self.bias
         return x
 
@@ -59,22 +73,37 @@ class BNContrastiveHead(BaseModule):
         embed_dims (int): embed dim of text and image features
         norm_cfg (dict): normalization params
     """
+
     def __init__(self,
                  embed_dims: int,
                  norm_cfg: ConfigDict,
-                 init_cfg: OptConfigType = None) -> None:
+                 init_cfg: OptConfigType = None,
+                 use_einsum: bool = True) -> None:
 
         super().__init__(init_cfg=init_cfg)
         self.norm = build_norm_layer(norm_cfg, embed_dims)[1]
         self.bias = nn.Parameter(torch.zeros([]))
         # use -1.0 is more stable
         self.logit_scale = nn.Parameter(-1.0 * torch.ones([]))
+        self.use_einsum = use_einsum
 
     def forward(self, x: Tensor, w: Tensor) -> Tensor:
         """Forward function of contrastive learning."""
         x = self.norm(x)
         w = F.normalize(w, dim=-1, p=2)
-        x = torch.einsum('bchw,bkc->bkhw', x, w)
+
+        if self.use_einsum:
+            x = torch.einsum('bchw,bkc->bkhw', x, w)
+        else:
+            batch, channel, height, width = x.shape
+            _, k, _ = w.shape
+            x = x.permute(0, 2, 3, 1)  # bchw->bhwc
+            x = x.reshape(batch, -1, channel)  # bhwc->b(hw)c
+            w = w.permute(0, 2, 1)  # bkc->bck
+            x = torch.matmul(x, w)
+            x = x.reshape(batch, height, width, k)
+            x = x.permute(0, 3, 1, 2)
+
         x = x * self.logit_scale.exp() + self.bias
         return x
 
@@ -92,9 +121,13 @@ class YOLOWorldHeadModule(YOLOv8HeadModule):
                  *args,
                  embed_dims: int,
                  use_bn_head: bool = False,
+                 use_einsum: bool = True,
+                 freeze_all: bool = False,
                  **kwargs) -> None:
         self.embed_dims = embed_dims
         self.use_bn_head = use_bn_head
+        self.use_einsum = use_einsum
+        self.freeze_all = freeze_all
         super().__init__(*args, **kwargs)
 
     def init_weights(self, prior_prob=0.01):
@@ -161,12 +194,32 @@ class YOLOWorldHeadModule(YOLOv8HeadModule):
                               kernel_size=1)))
             if self.use_bn_head:
                 self.cls_contrasts.append(
-                    BNContrastiveHead(self.embed_dims, self.norm_cfg))
+                    BNContrastiveHead(self.embed_dims,
+                                      self.norm_cfg,
+                                      use_einsum=self.use_einsum))
             else:
-                self.cls_contrasts.append(ContrastiveHead(self.embed_dims))
+                self.cls_contrasts.append(
+                    ContrastiveHead(self.embed_dims,
+                                    use_einsum=self.use_einsum))
 
         proj = torch.arange(self.reg_max, dtype=torch.float)
         self.register_buffer('proj', proj, persistent=False)
+
+        if self.freeze_all:
+            self._freeze_all()
+
+    def _freeze_all(self):
+        """Freeze the model."""
+        for m in self.modules():
+            if isinstance(m, _BatchNorm):
+                m.eval()
+            for param in m.parameters():
+                param.requires_grad = False
+
+    def train(self, mode=True):
+        super().train(mode)
+        if self.freeze_all:
+            self._freeze_all()
 
     def forward(self, img_feats: Tuple[Tensor],
                 txt_feats: Tensor) -> Tuple[List]:
@@ -206,11 +259,13 @@ class YOLOWorldHeadModule(YOLOv8HeadModule):
 class YOLOWorldHead(YOLOv8Head):
     """YOLO-World Head
     """
+
     def __init__(self, world_size=-1, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.world_size = world_size
 
     """YOLO World v8 head."""
+
     def loss(self, img_feats: Tuple[Tensor], txt_feats: Tensor,
              batch_data_samples: Union[list, dict]) -> dict:
         """Perform forward propagation and loss calculation of the detection
@@ -328,8 +383,8 @@ class YOLOWorldHead(YOLOv8Head):
                 with_stride=True)
 
             self.num_level_priors = [len(n) for n in mlvl_priors_with_stride]
-            self.flatten_priors_train = torch.cat(
-                mlvl_priors_with_stride, dim=0)
+            self.flatten_priors_train = torch.cat(mlvl_priors_with_stride,
+                                                  dim=0)
             self.stride_tensor = self.flatten_priors_train[..., [2]]
 
         # gt info
@@ -390,8 +445,8 @@ class YOLOWorldHead(YOLOv8Head):
                 flatten_pred_bboxes, prior_bbox_mask).reshape([-1, 4])
             assigned_bboxes_pos = torch.masked_select(
                 assigned_bboxes, prior_bbox_mask).reshape([-1, 4])
-            bbox_weight = torch.masked_select(
-                assigned_scores.sum(-1), fg_mask_pre_prior).unsqueeze(-1)
+            bbox_weight = torch.masked_select(assigned_scores.sum(-1),
+                                              fg_mask_pre_prior).unsqueeze(-1)
             loss_bbox = self.loss_bbox(
                 pred_bboxes_pos, assigned_bboxes_pos,
                 weight=bbox_weight) / assigned_scores_sum
@@ -405,11 +460,12 @@ class YOLOWorldHead(YOLOv8Head):
                 eps=0.01)
             assigned_ltrb_pos = torch.masked_select(
                 assigned_ltrb, prior_bbox_mask).reshape([-1, 4])
-            loss_dfl = self.loss_dfl(
-                pred_dist_pos.reshape(-1, self.head_module.reg_max),
-                assigned_ltrb_pos.reshape(-1),
-                weight=bbox_weight.expand(-1, 4).reshape(-1),
-                avg_factor=assigned_scores_sum)
+            loss_dfl = self.loss_dfl(pred_dist_pos.reshape(
+                -1, self.head_module.reg_max),
+                                     assigned_ltrb_pos.reshape(-1),
+                                     weight=bbox_weight.expand(-1,
+                                                               4).reshape(-1),
+                                     avg_factor=assigned_scores_sum)
         else:
             loss_bbox = flatten_pred_bboxes.sum() * 0
             loss_dfl = flatten_pred_bboxes.sum() * 0
@@ -417,10 +473,9 @@ class YOLOWorldHead(YOLOv8Head):
             _, world_size = get_dist_info()
         else:
             world_size = self.world_size
-        return dict(
-            loss_cls=loss_cls * num_imgs * world_size,
-            loss_bbox=loss_bbox * num_imgs * world_size,
-            loss_dfl=loss_dfl * num_imgs * world_size)
+        return dict(loss_cls=loss_cls * num_imgs * world_size,
+                    loss_bbox=loss_bbox * num_imgs * world_size,
+                    loss_dfl=loss_dfl * num_imgs * world_size)
 
     def predict_by_feat(self,
                         cls_scores: List[Tensor],
@@ -567,8 +622,9 @@ class YOLOWorldHead(YOLOv8Head):
                 scores, labels, keep_idxs, _ = filter_scores_and_topk(
                     scores, score_thr, nms_pre)
 
-            results = InstanceData(
-                scores=scores, labels=labels, bboxes=bboxes[keep_idxs])
+            results = InstanceData(scores=scores,
+                                   labels=labels,
+                                   bboxes=bboxes[keep_idxs])
 
             if rescale:
                 if pad_param is not None:
@@ -582,12 +638,11 @@ class YOLOWorldHead(YOLOv8Head):
                 # do not need max_per_img
                 cfg.max_per_img = len(results)
 
-            results = self._bbox_post_process(
-                results=results,
-                cfg=cfg,
-                rescale=False,
-                with_nms=with_nms,
-                img_meta=img_meta)
+            results = self._bbox_post_process(results=results,
+                                              cfg=cfg,
+                                              rescale=False,
+                                              with_nms=with_nms,
+                                              img_meta=img_meta)
             results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
             results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
 

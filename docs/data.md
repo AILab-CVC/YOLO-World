@@ -10,7 +10,7 @@ For pre-training YOLO-World, we adopt several datasets as listed in the below ta
 | GQA | 621k | grounding | 3,681k |
 | Flickr | 149k | grounding | 641k |
 | CC3M-Lite | 245k | image-text | 821k |
-
+ 
 ### Dataset Directory
 
 We put all data into the `data` directory, such as:
@@ -85,3 +85,16 @@ For custom dataset, we suggest the users convert the annotation files according 
 1. **Large vocabulary, grounding, referring:** you can follow the annotation format as the `MixedGrounding` dataset, which adds `caption` and `tokens_positive` for assigning the text for each object. The texts can be a category or a noun phrases.
 
 2. **Custom vocabulary (fixed):** you can adopt the `MultiModalDataset` wrapper as the `Objects365` and create a **text json** for your custom categories.
+
+
+### CC3M Pseudo Annotations
+
+The following annotations are generated according to the automatic labeling process in our paper. Adn we report the results based on these annotations.
+
+To use CC3M annotations, you need to prepare the `CC3M` images first.
+
+| Data | Images | Boxes | File |
+| :--: | :----: | :---: | :---: |
+| CC3M-246K | 246,363 | 820,629 | [Download 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/cc3m_pseudo_annotations.json) |
+| CC3M-500K | 536,405 | 1,784,405| [Download 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/cc3m_pseudo_500k_annotations.json) |
+| CC3M-750K | 750,000 | 4,504,805 | [Download 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/cc3m_pseudo_750k_annotations.json) |

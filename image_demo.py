@@ -12,11 +12,12 @@ from mmengine.dataset import Compose
 from mmengine.utils import ProgressBar
 from mmyolo.registry import RUNNERS
 
-# Removed unnecessary import
-# import supervision as sv
+import supervision as sv
 
-BOUNDING_BOX_ANNOTATOR = None  # Define BOUNDING_BOX_ANNOTATOR object
-LABEL_ANNOTATOR = None  # Define LABEL_ANNOTATOR object
+BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator()
+LABEL_ANNOTATOR = sv.LabelAnnotator()
+MASK_ANNOTATOR = sv.MaskAnnotator()
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='YOLO-World Demo')
@@ -25,7 +26,8 @@ def parse_args():
     parser.add_argument('image', help='image path, include image file or dir.')
     parser.add_argument(
         'text',
-        help='text prompts, including categories separated by a comma or a txt file with each line as a prompt.'
+        help=
+        'text prompts, including categories separated by a comma or a txt file with each line as a prompt.'
     )
     parser.add_argument('--topk',
                         default=100,
@@ -41,9 +43,10 @@ def parse_args():
     parser.add_argument('--show',
                         action='store_true',
                         help='show the detection results.')
-    parser.add_argument('--annotation',
-                        action='store_true',
-                        help='save the annotated detection results as yolo text format.')
+    parser.add_argument(
+        '--annotation',
+        action='store_true',
+        help='save the annotated detection results as yolo text format.')
     parser.add_argument('--amp',
                         action='store_true',
                         help='use mixed precision for inference.')
@@ -81,27 +84,38 @@ def inference_detector(runner,
     with autocast(enabled=use_amp), torch.no_grad():
         output = runner.model.test_step(data_batch)[0]
         pred_instances = output.pred_instances
-        pred_instances = pred_instances[
-            pred_instances.scores.float() > score_thr]
+        pred_instances = pred_instances[pred_instances.scores.float() >
+                                        score_thr]
+
     if len(pred_instances.scores) > max_dets:
         indices = pred_instances.scores.float().topk(max_dets)[1]
         pred_instances = pred_instances[indices]
 
     pred_instances = pred_instances.cpu().numpy()
-    detections = None  # Define detections object
+
+    if 'masks' in pred_instances:
+        masks = pred_instances['masks']
+    else:
+        masks = None
+
+    detections = sv.Detections(xyxy=pred_instances['bboxes'],
+                               class_id=pred_instances['labels'],
+                               confidence=pred_instances['scores'],
+                               mask=masks)
 
     labels = [
         f"{texts[class_id][0]} {confidence:0.2f}" for class_id, confidence in
         zip(detections.class_id, detections.confidence)
     ]
 
-    #label images
+    # label images
     image = cv2.imread(image_path)
     anno_image = image.copy()
     image = BOUNDING_BOX_ANNOTATOR.annotate(image, detections)
     image = LABEL_ANNOTATOR.annotate(image, detections, labels=labels)
+    if masks is not None:
+        image = MASK_ANNOTATOR.annotate(image, detections)
     cv2.imwrite(osp.join(output_dir, osp.basename(image_path)), image)
-
 
     if annotation:
         images_dict = {}
@@ -109,24 +123,20 @@ def inference_detector(runner,
 
         images_dict[osp.basename(image_path)] = anno_image
         annotations_dict[osp.basename(image_path)] = detections
-        
-        ANNOTATIONS_DIRECTORY =  os.makedirs(r"./annotations", exist_ok=True)
+
+        ANNOTATIONS_DIRECTORY = os.makedirs(r"./annotations", exist_ok=True)
 
         MIN_IMAGE_AREA_PERCENTAGE = 0.002
         MAX_IMAGE_AREA_PERCENTAGE = 0.80
         APPROXIMATION_PERCENTAGE = 0.75
-        
-        sv.DetectionDataset(
-        classes=texts,
-        images=images_dict,
-        annotations=annotations_dict
-        ).as_yolo(
-        annotations_directory_path=ANNOTATIONS_DIRECTORY,
-        min_image_area_percentage=MIN_IMAGE_AREA_PERCENTAGE,
-        max_image_area_percentage=MAX_IMAGE_AREA_PERCENTAGE,
-        approximation_percentage=APPROXIMATION_PERCENTAGE
-        )
 
+        sv.DetectionDataset(
+            classes=texts, images=images_dict,
+            annotations=annotations_dict).as_yolo(
+                annotations_directory_path=ANNOTATIONS_DIRECTORY,
+                min_image_area_percentage=MIN_IMAGE_AREA_PERCENTAGE,
+                max_image_area_percentage=MAX_IMAGE_AREA_PERCENTAGE,
+                approximation_percentage=APPROXIMATION_PERCENTAGE)
 
     if show:
         cv2.imshow('Image', image)  # Provide window name

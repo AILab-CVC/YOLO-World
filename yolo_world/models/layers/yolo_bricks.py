@@ -29,7 +29,8 @@ class MaxSigmoidAttnBlock(BaseModule):
                  norm_cfg: ConfigType = dict(type='BN',
                                              momentum=0.03,
                                              eps=0.001),
-                 init_cfg: OptMultiConfig = None) -> None:
+                 init_cfg: OptMultiConfig = None,
+                 use_einsum: bool = True) -> None:
         super().__init__(init_cfg=init_cfg)
         conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
 
@@ -38,6 +39,7 @@ class MaxSigmoidAttnBlock(BaseModule):
             'out_channels and embed_channels should be divisible by num_heads.'
         self.num_heads = num_heads
         self.head_channels = out_channels // num_heads
+        self.use_einsum = use_einsum
 
         self.embed_conv = ConvModule(
             in_channels,
@@ -71,7 +73,17 @@ class MaxSigmoidAttnBlock(BaseModule):
         embed = self.embed_conv(x) if self.embed_conv is not None else x
         embed = embed.reshape(B, self.num_heads, self.head_channels, H, W)
 
-        attn_weight = torch.einsum('bmchw,bnmc->bmhwn', embed, guide)
+        if self.use_einsum:
+            attn_weight = torch.einsum('bmchw,bnmc->bmhwn', embed, guide)
+        else:
+            batch, m, channel, height, width = embed.shape
+            _, n, _, _ = guide.shape
+            embed = embed.permute(0, 1, 3, 4, 2)
+            embed = embed.reshape(batch, m, -1, channel)
+            guide = guide.permute(0, 2, 3, 1)
+            attn_weight = torch.matmul(embed, guide)
+            attn_weight = attn_weight.reshape(batch, m, height, width, n)
+
         attn_weight = attn_weight.max(dim=-1)[0]
         attn_weight = attn_weight / (self.head_channels**0.5)
         attn_weight = attn_weight + self.bias[None, :, None, None]
@@ -101,7 +113,8 @@ class MaxSigmoidCSPLayerWithTwoConv(CSPLayerWithTwoConv):
             conv_cfg: OptConfigType = None,
             norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-            init_cfg: OptMultiConfig = None) -> None:
+            init_cfg: OptMultiConfig = None,
+            use_einsum: bool = True) -> None:
         super().__init__(in_channels=in_channels,
                          out_channels=out_channels,
                          expand_ratio=expand_ratio,
@@ -126,7 +139,8 @@ class MaxSigmoidCSPLayerWithTwoConv(CSPLayerWithTwoConv):
                                               num_heads=num_heads,
                                               with_scale=with_scale,
                                               conv_cfg=conv_cfg,
-                                              norm_cfg=norm_cfg)
+                                              norm_cfg=norm_cfg,
+                                              use_einsum=use_einsum)
 
     def forward(self, x: Tensor, guide: Tensor) -> Tensor:
         """Forward process."""
@@ -146,7 +160,8 @@ class ImagePoolingAttentionModule(nn.Module):
                  with_scale: bool = False,
                  num_feats: int = 3,
                  num_heads: int = 8,
-                 pool_size: int = 3):
+                 pool_size: int = 3,
+                 use_einsum: bool = True):
         super().__init__()
 
         self.text_channels = text_channels
@@ -155,7 +170,7 @@ class ImagePoolingAttentionModule(nn.Module):
         self.num_feats = num_feats
         self.head_channels = embed_channels // num_heads
         self.pool_size = pool_size
-
+        self.use_einsum = use_einsum
         if with_scale:
             self.scale = nn.Parameter(torch.tensor([0.]), requires_grad=True)
         else:
@@ -195,12 +210,21 @@ class ImagePoolingAttentionModule(nn.Module):
         q = q.reshape(B, -1, self.num_heads, self.head_channels)
         k = k.reshape(B, -1, self.num_heads, self.head_channels)
         v = v.reshape(B, -1, self.num_heads, self.head_channels)
+        if self.use_einsum:
+            attn_weight = torch.einsum('bnmc,bkmc->bmnk', q, k)
+        else:
+            q = q.permute(0, 2, 1, 3)
+            k = k.permute(0, 2, 3, 1)
+            attn_weight = torch.matmul(q, k)
 
-        attn_weight = torch.einsum('bnmc,bkmc->bmnk', q, k)
         attn_weight = attn_weight / (self.head_channels**0.5)
         attn_weight = F.softmax(attn_weight, dim=-1)
-
-        x = torch.einsum('bmnk,bkmc->bnmc', attn_weight, v)
+        if self.use_einsum:
+            x = torch.einsum('bmnk,bkmc->bnmc', attn_weight, v)
+        else:
+            v = v.permute(0, 2, 1, 3)
+            x = torch.matmul(attn_weight, v)
+            x = x.permute(0, 2, 1, 3)
         x = self.proj(x.reshape(B, -1, self.embed_channels))
         return x * self.scale + text_features
 

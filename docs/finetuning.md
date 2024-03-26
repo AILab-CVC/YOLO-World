@@ -103,15 +103,3 @@ It's easy:
 ```bash
 ./dist_train.sh <path/to/config> <NUM_GPUS> --amp
 ```
-
-
-### COCO Fine-tuning
-
-| model | efficient neck |  AP | AP<sub>50</sub> | AP<sub>75</sub> | weights |
-| :---- | :------------: | :-: | :--------------:| :-------------: |:------: | 
-| YOLO-World-S | ✖️ | 45.7 | 62.3 | 49.9 | [comming]() |
-| YOLO-World-M | ✖️ | 50.7 | 67.2 | 55.1 | [comming]() |
-| [YOLO-World-L](./../configs/finetune_coco/yolo_world_l_dual_vlpan_2e-4_80e_8gpus_finetune_coco.py) | ✖️ | 53.3 | 70.3 | 58.1 | [comming]() |
-| YOLO-World-S | ✔️ | 45.9 | 62.3 | 50.1 | [comming]() |
-| YOLO-World-M | ✔️ | 51.2 | 68.1 | 55.9 | [comming]() |
-| [YOLO-World-L](./../configs/finetune_coco/yolo_world_l_efficient_neck_2e-4_80e_8gpus_finetune_coco.py) | ✔️ | 53.3 | 70.1 | 58.2 | [comming]() |
