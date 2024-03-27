@@ -1,5 +1,10 @@
 ## Prompt Tuning for YOLO-World
 
+### NOTE:
+
+This folder contains many experimental config files, which will be removed later!!
+
+### Experimental Results
 
 | Model | Config |  AP  | AP50 | AP75  | APS | APM | APL |
 | :---- | :----: | :--: | :--: | :---: | :-: | :-: | :-: |

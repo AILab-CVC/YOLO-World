@@ -139,21 +139,17 @@ train_cfg = dict(max_epochs=max_epochs,
                  val_interval=5,
                  dynamic_intervals=[((max_epochs - close_mosaic_epochs),
                                      _base_.val_interval_stage2)])
-optim_wrapper = dict(optimizer=dict(
-    _delete_=True,
-    type='AdamW',
-    lr=base_lr,
-    weight_decay=weight_decay,
-    batch_size_per_gpu=train_batch_size_per_gpu),
-                     paramwise_cfg=dict(bias_decay_mult=0.0,
-                                        norm_decay_mult=0.0,
-                                        custom_keys={
-                                            'backbone.text_model':
-                                            dict(lr_mult=0.01),
-                                            'logit_scale':
-                                            dict(weight_decay=0.0)
-                                        }),
-                     constructor='YOLOWv5OptimizerConstructor')
+optim_wrapper = dict(
+    optimizer=dict(
+        _delete_=True,
+        type='AdamW',
+        lr=base_lr,
+        weight_decay=weight_decay,
+        batch_size_per_gpu=train_batch_size_per_gpu),
+    paramwise_cfg=dict(
+        custom_keys={'backbone.text_model': dict(lr_mult=0.01),
+                     'logit_scale': dict(weight_decay=0.0)}),
+    constructor='YOLOWv5OptimizerConstructor')
 
 # evaluation settings
 val_evaluator = dict(_delete_=True,

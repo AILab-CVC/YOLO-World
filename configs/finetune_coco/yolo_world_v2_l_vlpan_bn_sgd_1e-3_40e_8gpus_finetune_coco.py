@@ -5,14 +5,14 @@ custom_imports = dict(imports=['yolo_world'], allow_failed_imports=False)
 # hyper-parameters
 num_classes = 80
 num_training_classes = 80
-max_epochs = 80  # Maximum training epochs
-close_mosaic_epochs = 10
+max_epochs = 40  # Maximum training epochs
+close_mosaic_epochs = 30
 save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 2e-4
-weight_decay = 0.05
+base_lr = 1e-3
+weight_decay = 0.0005
 train_batch_size_per_gpu = 16
 load_from = 'pretrained_models/yolo_world_l_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_cc3mlite_train-ca93cd1f.pth'
 text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
@@ -70,11 +70,12 @@ mosaic_affine_transform = [
         border=(-_base_.img_scale[0] // 2, -_base_.img_scale[1] // 2),
         border_val=(114, 114, 114))
 ]
+
 train_pipeline = [
     *_base_.pre_transform, *mosaic_affine_transform,
-    # dict(type='YOLOv5MultiModalMixUp',
-    #      prob=_base_.mixup_prob,
-    #      pre_transform=[*_base_.pre_transform, *mosaic_affine_transform]),
+    dict(type='YOLOv5MultiModalMixUp',
+         prob=_base_.mixup_prob,
+         pre_transform=[*_base_.pre_transform, *mosaic_affine_transform]),
     *_base_.last_transform[:-1], *text_transform
 ]
 train_pipeline_stage2 = [*_base_.train_pipeline_stage2[:-1], *text_transform]
@@ -138,18 +139,17 @@ train_cfg = dict(max_epochs=max_epochs,
                                      _base_.val_interval_stage2)])
 optim_wrapper = dict(optimizer=dict(
     _delete_=True,
-    type='AdamW',
+    type='SGD',
     lr=base_lr,
+    momentum=0.937,
+    nesterov=True,
     weight_decay=weight_decay,
     batch_size_per_gpu=train_batch_size_per_gpu),
-                     paramwise_cfg=dict(bias_decay_mult=0.0,
-                                        norm_decay_mult=0.0,
-                                        custom_keys={
-                                            'backbone.text_model':
-                                            dict(lr_mult=0.01),
-                                            'logit_scale':
-                                            dict(weight_decay=0.0)
-                                        }),
+                     paramwise_cfg=dict(
+                         custom_keys={
+                             'backbone.text_model': dict(lr_mult=0.01),
+                             'logit_scale': dict(weight_decay=0.0)
+                         }),
                      constructor='YOLOWv5OptimizerConstructor')
 
 # evaluation settings
