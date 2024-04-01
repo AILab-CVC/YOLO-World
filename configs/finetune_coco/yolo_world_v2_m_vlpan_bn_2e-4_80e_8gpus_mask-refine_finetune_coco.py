@@ -1,3 +1,5 @@
+# fmt: off
+
 _base_ = (
     '../../third_party/mmyolo/configs/yolov8/'
     'yolov8_m_mask-refine_syncbn_fast_8xb16-500e_coco.py')
@@ -17,7 +19,7 @@ neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
 base_lr = 2e-4
 weight_decay = 0.05
 train_batch_size_per_gpu = 16
-load_from = 'pretrained_models/yolo_world_m_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_train-c6237d5b.pth'
+load_from = '../checkpoints/yolo_world_v2_m_obj365v1_goldg_pretrain-c6237d5b.pth'
 # text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
 text_model_name = 'openai/clip-vit-base-patch32'
 persistent_workers = False
@@ -100,11 +102,11 @@ coco_train_dataset = dict(
     type='MultiModalDataset',
     dataset=dict(
         type='YOLOv5CocoDataset',
-        data_root='data/coco',
+        data_root='/data/coco',
         ann_file='annotations/instances_train2017.json',
-        data_prefix=dict(img='train2017/'),
+        data_prefix=dict(img='images/train2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
-    class_text_path='data/texts/coco_class_texts.json',
+    class_text_path='../data/texts/coco_class_texts.json',
     pipeline=train_pipeline)
 
 train_dataloader = dict(
@@ -125,11 +127,11 @@ coco_val_dataset = dict(
     type='MultiModalDataset',
     dataset=dict(
         type='YOLOv5CocoDataset',
-        data_root='data/coco',
+        data_root='/data/coco',
         ann_file='annotations/instances_val2017.json',
-        data_prefix=dict(img='val2017/'),
+        data_prefix=dict(img='images/val2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
-    class_text_path='data/texts/coco_class_texts.json',
+    class_text_path='../data/texts/coco_class_texts.json',
     pipeline=test_pipeline)
 val_dataloader = dict(dataset=coco_val_dataset)
 test_dataloader = val_dataloader
@@ -180,5 +182,15 @@ val_evaluator = dict(
     _delete_=True,
     type='mmdet.CocoMetric',
     proposal_nums=(100, 1, 10),
-    ann_file='data/coco/annotations/instances_val2017.json',
+    ann_file='/data/coco/annotations/instances_val2017.json',
     metric='bbox')
+
+vis_backends = [
+    dict(type="LocalVisBackend"),
+    dict(type="WandbVisBackend", init_kwargs={"project": "yolo-world", "entity": "algo", "name": "finetune_m_coco"}),
+]
+
+visualizer = dict(type="mmdet.DetLocalVisualizer", vis_backends=vis_backends, name="visualizer")
+log_processor = dict(type="LogProcessor", window_size=4, by_epoch=True)
+
+randomness = dict(seed=42, diff_rank_seed=True, deterministic=False)  # deterministic does not work with the CUBLAS we have installed

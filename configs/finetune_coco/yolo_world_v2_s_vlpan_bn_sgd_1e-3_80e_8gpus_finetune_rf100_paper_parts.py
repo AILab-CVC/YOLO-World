@@ -1,20 +1,48 @@
-_base_ = "../../third_party/mmyolo/configs/yolov8/" "yolov8_l_syncbn_fast_8xb16-500e_coco.py"
+_base_ = "../../third_party/mmyolo/configs/yolov8/" "yolov8_s_syncbn_fast_8xb16-500e_coco.py"
 custom_imports = dict(imports=["yolo_world"], allow_failed_imports=False)
 
+dataset_name = "paper-parts"
+num_classes = 19
+metainfo = dict(
+    classes=[
+        "author",
+        "chapter",
+        "equation",
+        "equation number",
+        "figure",
+        "figure caption",
+        "footnote",
+        "list of content heading",
+        "list of content text",
+        "page number",
+        "paragraph",
+        "reference text",
+        "section",
+        "subsection",
+        "subsubsection",
+        "table",
+        "table caption",
+        "table of contents text",
+        "title",
+    ]
+)
+num_repeats = 1
+
 # hyper-parameters
-num_classes = 8
-num_training_classes = 8
+num_training_classes = num_classes
 max_epochs = 80  # Maximum training epochs
-close_mosaic_epochs = 10
+close_mosaic_epochs = 60
 save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 2e-4 * 8.0
-weight_decay = 0.05
+base_lr = 1e-3
+weight_decay = 0.0005
 train_batch_size_per_gpu = 16
-load_from = "../checkpoints/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth"
+load_from = "../checkpoints/yolo_world_v2_s_obj365v1_goldg_pretrain-55b943ea.pth"
+text_model_name = "openai/clip-vit-base-patch32"
 persistent_workers = False
+mixup_prob = 0.15
 
 # model settings
 model = dict(
@@ -27,17 +55,18 @@ model = dict(
         _delete_=True,
         type="MultiModalYOLOBackbone",
         image_model={{_base_.model.backbone}},
-        text_model=dict(type="HuggingCLIPLanguageBackbone", model_name="openai/clip-vit-base-patch32", frozen_modules=["all"]),
+        text_model=dict(type="HuggingCLIPLanguageBackbone", model_name=text_model_name, frozen_modules=["all"]),
     ),
     neck=dict(
-        type="YOLOWorldDualPAFPN",
+        type="YOLOWorldPAFPN",
         guide_channels=text_channels,
         embed_channels=neck_embed_channels,
         num_heads=neck_num_heads,
         block_cfg=dict(type="MaxSigmoidCSPLayerWithTwoConv"),
-        text_enhancder=dict(type="ImagePoolingAttentionModule", embed_channels=256, num_heads=8),
     ),
-    bbox_head=dict(type="YOLOWorldHead", head_module=dict(type="YOLOWorldHeadModule", embed_dims=text_channels, num_classes=num_training_classes)),
+    bbox_head=dict(
+        type="YOLOWorldHead", head_module=dict(type="YOLOWorldHeadModule", use_bn_head=True, embed_dims=text_channels, num_classes=num_training_classes)
+    ),
     train_cfg=dict(assigner=dict(num_classes=num_training_classes)),
 )
 
@@ -62,25 +91,29 @@ mosaic_affine_transform = [
 train_pipeline = [
     *_base_.pre_transform,
     *mosaic_affine_transform,
-    dict(type="YOLOv5MultiModalMixUp", prob=_base_.mixup_prob, pre_transform=[*_base_.pre_transform, *mosaic_affine_transform]),
+    dict(type="YOLOv5MultiModalMixUp", prob=mixup_prob, pre_transform=[*_base_.pre_transform, *mosaic_affine_transform]),
     *_base_.last_transform[:-1],
     *text_transform,
 ]
 train_pipeline_stage2 = [*_base_.train_pipeline_stage2[:-1], *text_transform]
-metainfo = dict(classes=["aquarium", "fish", "jellyfish", "penguin", "puffin", "shark", "starfish", "stingray"], palette=[(220, 20, 60)])
+
 coco_train_dataset = dict(
     _delete_=True,
-    type="MultiModalDataset",
+    type="RepeatDataset",
+    times=num_repeats,
     dataset=dict(
-        type="YOLOv5CocoDataset",
-        data_root="/data/rf100/aquarium-qlnqy",
-        ann_file="train/_annotations.coco.json",
-        data_prefix=dict(img="train/"),
-        filter_cfg=dict(filter_empty_gt=False, min_size=32),
-        metainfo=metainfo,
+        type="MultiModalDataset",
+        dataset=dict(
+            type="YOLOv5CocoDataset",
+            data_root=f"/data/rf100/{dataset_name}",
+            ann_file="train/_annotations.coco.json",
+            data_prefix=dict(img="train/"),
+            # filter_cfg=dict(filter_empty_gt=False, min_size=32),
+            metainfo=metainfo,
+        ),
+        class_text_path=f"../data/texts/rf100_{dataset_name}_class_texts.json",
+        pipeline=train_pipeline,
     ),
-    class_text_path="../data/texts/rf100_aquarium-qlnqy_class_texts.json",
-    pipeline=train_pipeline,
 )
 
 train_dataloader = dict(
@@ -96,15 +129,16 @@ coco_val_dataset = dict(
     type="MultiModalDataset",
     dataset=dict(
         type="YOLOv5CocoDataset",
-        data_root="/data/rf100/aquarium-qlnqy",
+        data_root=f"/data/rf100/{dataset_name}",
         ann_file="valid/_annotations.coco.json",
         data_prefix=dict(img="valid/"),
-        filter_cfg=dict(filter_empty_gt=False, min_size=32),
+        # filter_cfg=dict(filter_empty_gt=False, min_size=32),
         metainfo=metainfo,
     ),
-    class_text_path="../data/texts/rf100_aquarium-qlnqy_class_texts.json",
+    class_text_path=f"../data/texts/rf100_{dataset_name}_class_texts.json",
     pipeline=test_pipeline,
 )
+
 val_dataloader = dict(dataset=coco_val_dataset)
 test_dataloader = val_dataloader
 # training settings
@@ -118,21 +152,27 @@ custom_hooks = [
 ]
 train_cfg = dict(max_epochs=max_epochs, val_interval=5, dynamic_intervals=[((max_epochs - close_mosaic_epochs), _base_.val_interval_stage2)])
 optim_wrapper = dict(
-    optimizer=dict(_delete_=True, type="AdamW", lr=base_lr, weight_decay=weight_decay, batch_size_per_gpu=train_batch_size_per_gpu),
-    paramwise_cfg=dict(
-        bias_decay_mult=0.0, norm_decay_mult=0.0, custom_keys={"backbone.text_model": dict(lr_mult=0.01), "logit_scale": dict(weight_decay=0.0)}
+    optimizer=dict(
+        _delete_=True, type="SGD", lr=base_lr, momentum=0.937, nesterov=True, weight_decay=weight_decay, batch_size_per_gpu=train_batch_size_per_gpu
     ),
+    paramwise_cfg=dict(custom_keys={"backbone.text_model": dict(lr_mult=0.01), "logit_scale": dict(weight_decay=0.0)}),
     constructor="YOLOWv5OptimizerConstructor",
 )
 
 # evaluation settings
 val_evaluator = dict(
-    _delete_=True, type="mmdet.CocoMetric", proposal_nums=(100, 1, 10), ann_file="/data/rf100/aquarium-qlnqy/valid/_annotations.coco.json", metric="bbox"
+    _delete_=True,
+    type="mmdet.CocoMetric",
+    proposal_nums=(100, 1, 10),
+    ann_file=f"/data/rf100/{dataset_name}/valid/_annotations.coco.json",
+    metric="bbox",
 )
+
+# auto_scale_lr = dict(base_batch_size=8 * train_batch_size_per_gpu, enable=True)
 
 vis_backends = [
     dict(type="LocalVisBackend"),
-    dict(type="WandbVisBackend", init_kwargs={"project": "yolo-world", "entity": "algo", "name": "finetune_rf100_aquarium"}),
+    dict(type="WandbVisBackend", init_kwargs={"project": "yolo-world", "entity": "algo", "name": f"finetune_s_rf100_{dataset_name}"}),
 ]
 
 visualizer = dict(type="mmdet.DetLocalVisualizer", vis_backends=vis_backends, name="visualizer")
