@@ -43,8 +43,8 @@ class YOLOWorldDetector(YOLODetector):
         img_feats, txt_feats = self.extract_feat(batch_inputs,
                                                  batch_data_samples)
 
-        self.bbox_head.num_classes = self.num_test_classes
-        # self.bbox_head.num_classes = txt_feats[0].shape[0]
+        # self.bbox_head.num_classes = self.num_test_classes
+        self.bbox_head.num_classes = txt_feats[0].shape[0]
         results_list = self.bbox_head.predict(img_feats,
                                               txt_feats,
                                               batch_data_samples,
