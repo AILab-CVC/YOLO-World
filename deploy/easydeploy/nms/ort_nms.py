@@ -7,47 +7,59 @@ _XYWH2XYXY = torch.tensor([[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0],
                           dtype=torch.float32)
 
 
-def select_nms_index(scores: Tensor,
-                     boxes: Tensor,
-                     nms_index: Tensor,
-                     batch_size: int,
-                     keep_top_k: int = -1):
+def sort_nms_index(nms_index, scores, keep_top_k=-1):
+    """
+    first sort the nms_index by batch, and then sort by score in every image result, final apply keep_top_k strategy. In the process, we can also get the number of detections for each image: num_dets
+    """
+    # first sort by batch index to make sure that the same batch index is together
+    device = nms_index.device
+    nms_index_indices = torch.argsort(nms_index[:, 0], dim=0).to(device)
+    nms_index = nms_index[nms_index_indices]
+
+    scores = scores[nms_index[:, 0], nms_index[:, 1], nms_index[:, 2]]
+    batch_inds = nms_index[:, 0]
+
+    # Get the number of detections for each image
+    _, num_dets = torch.unique(batch_inds, return_counts=True)
+    num_dets = num_dets.to(device)
+    # Calculate the sum from front to back
+    cumulative_sum = torch.cumsum(num_dets, dim=0).to(device)
+    # add initial value 0
+    cumulative_sum = torch.cat((torch.tensor([0]).to(device), cumulative_sum))
+    for i in range(len(num_dets)):
+        start = cumulative_sum[i]
+        end = cumulative_sum[i + 1]
+        # sort by score in every batch
+        block_idx = torch.argsort(scores[start:end], descending=True).to(device)
+        nms_index[start:end] = nms_index[start:end][block_idx]
+        if keep_top_k > 0 and end - start > keep_top_k:
+            # delete lines from start+keep_top_k to end to keep only top k
+            nms_index = torch.cat(
+                (nms_index[: start + keep_top_k], nms_index[end:]), dim=0
+            )
+            num_dets[i] -= end - start - keep_top_k
+            cumulative_sum -= end - start - keep_top_k
+    return nms_index, num_dets
+
+
+def select_nms_index(
+    scores: Tensor,
+    boxes: Tensor,
+    nms_index: Tensor,
+    batch_size: int,
+    keep_top_k: int = -1,
+):
+    if nms_index.numel() == 0:
+        return torch.empty(0), torch.empty(0, 4), torch.empty(0), torch.empty(0)
+    nms_index, num_dets = sort_nms_index(nms_index, scores, keep_top_k)
     batch_inds, cls_inds = nms_index[:, 0], nms_index[:, 1]
     box_inds = nms_index[:, 2]
 
-    scores = scores[batch_inds, cls_inds, box_inds].unsqueeze(1)
-    boxes = boxes[batch_inds, box_inds, ...]
-    dets = torch.cat([boxes, scores], dim=1)
+    # according to the nms_index to get the scores,boxes and labels
+    batched_scores = scores[batch_inds, cls_inds, box_inds]
+    batched_dets = boxes[batch_inds, box_inds, ...]
+    batched_labels = cls_inds
 
-    batched_dets = dets.unsqueeze(0).repeat(batch_size, 1, 1)
-    batch_template = torch.arange(
-        0, batch_size, dtype=batch_inds.dtype, device=batch_inds.device)
-    batched_dets = batched_dets.where(
-        (batch_inds == batch_template.unsqueeze(1)).unsqueeze(-1),
-        batched_dets.new_zeros(1))
-
-    batched_labels = cls_inds.unsqueeze(0).repeat(batch_size, 1)
-    batched_labels = batched_labels.where(
-        (batch_inds == batch_template.unsqueeze(1)),
-        batched_labels.new_ones(1) * -1)
-
-    N = batched_dets.shape[0]
-
-    batched_dets = torch.cat((batched_dets, batched_dets.new_zeros((N, 1, 5))),
-                             1)
-    batched_labels = torch.cat((batched_labels, -batched_labels.new_ones(
-        (N, 1))), 1)
-
-    _, topk_inds = batched_dets[:, :, -1].sort(dim=1, descending=True)
-    topk_batch_inds = torch.arange(
-        batch_size, dtype=topk_inds.dtype,
-        device=topk_inds.device).view(-1, 1)
-    batched_dets = batched_dets[topk_batch_inds, topk_inds, ...]
-    batched_labels = batched_labels[topk_batch_inds, topk_inds, ...]
-    batched_dets, batched_scores = batched_dets.split([4, 1], 2)
-    batched_scores = batched_scores.squeeze(-1)
-
-    num_dets = (batched_scores > 0).sum(1, keepdim=True)
     return num_dets, batched_dets, batched_scores, batched_labels
 
 
