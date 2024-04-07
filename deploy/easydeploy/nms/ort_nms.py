@@ -104,8 +104,8 @@ def onnx_nms(
     box_coding: int = 0,
 ):
     max_output_boxes_per_class = torch.tensor([max_output_boxes_per_class])
-    iou_threshold = torch.tensor([iou_threshold])
-    score_threshold = torch.tensor([score_threshold])
+    iou_threshold = torch.tensor([iou_threshold]).to(boxes.device)
+    score_threshold = torch.tensor([score_threshold]).to(boxes.device)
 
     batch_size, _, _ = scores.shape
     if box_coding == 1:
