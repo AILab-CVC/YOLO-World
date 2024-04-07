@@ -8,18 +8,18 @@ metainfo = dict(classes=["bicycle", "car", "dog", "person"])
 # hyper-parameters
 num_training_classes = num_classes
 max_epochs = 100  # Maximum training epochs
-close_mosaic_epochs = 60
+close_mosaic_epochs = 80
 save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 1e-3
-weight_decay = 0.00025
+base_lr = 5e-4
+weight_decay = 0.0001
 train_batch_size_per_gpu = 16
 load_from = "../checkpoints/yolo_world_v2_s_obj365v1_goldg_pretrain-55b943ea.pth"
 text_model_name = "openai/clip-vit-base-patch32"
 persistent_workers = False
-mixup_prob = 0.15
+mixup_prob = 0.0
 
 # model settings
 model = dict(
@@ -73,8 +73,8 @@ mosaic_affine_transform = [
         type="YOLOv5RandomAffine",
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
-        max_aspect_ratio=100.0,
-        scaling_ratio_range=(1 - _base_.affine_scale, 1 + _base_.affine_scale),
+        max_aspect_ratio=20.0,
+        scaling_ratio_range=(0.5, 1.5),
         # img_scale is (width, height)
         border=(-_base_.img_scale[0] // 2, -_base_.img_scale[1] // 2),
         border_val=(114, 114, 114),
@@ -120,7 +120,6 @@ coco_val_dataset = dict(
         data_root=f"/data/rf100/{dataset_name}",
         ann_file="valid/_annotations.coco.json",
         data_prefix=dict(img="valid/"),
-        # filter_cfg=dict(filter_empty_gt=False, min_size=32),
         metainfo=metainfo,
     ),
     class_text_path=f"../data/texts/rf100_{dataset_name}_class_texts.json",
@@ -131,17 +130,21 @@ val_dataloader = dict(dataset=coco_val_dataset)
 test_dataloader = val_dataloader
 # training settings
 default_hooks = dict(
-    param_scheduler=dict(scheduler_type="linear", lr_factor=0.01, max_epochs=max_epochs),
-    checkpoint=dict(max_keep_ckpts=-1, save_best=None, interval=save_epoch_intervals),
+    param_scheduler=dict(scheduler_type="cosine", lr_factor=0.01, max_epochs=max_epochs),
+    checkpoint=dict(max_keep_ckpts=3, save_best=None, interval=save_epoch_intervals),
 )
 custom_hooks = [
-    dict(type="EMAHook", ema_type="ExpMomentumEMA", momentum=0.0001, update_buffers=True, strict_load=False, priority=49),
+    dict(type="EMAHook", ema_type="ExpMomentumEMA", momentum=0.1, update_buffers=True, strict_load=False, priority=49),
     dict(type="mmdet.PipelineSwitchHook", switch_epoch=max_epochs - close_mosaic_epochs, switch_pipeline=train_pipeline_stage2),
 ]
 train_cfg = dict(max_epochs=max_epochs, val_interval=5, dynamic_intervals=[((max_epochs - close_mosaic_epochs), _base_.val_interval_stage2)])
 optim_wrapper = dict(
     optimizer=dict(
-        _delete_=True, type="SGD", lr=base_lr, momentum=0.937, nesterov=True, weight_decay=weight_decay, batch_size_per_gpu=train_batch_size_per_gpu
+        _delete_=True,
+        type="AdamW",
+        lr=base_lr,
+        weight_decay=weight_decay,
+        batch_size_per_gpu=train_batch_size_per_gpu,
     ),
     paramwise_cfg=dict(custom_keys={"backbone.text_model": dict(lr_mult=0.01), "logit_scale": dict(weight_decay=0.0)}),
     constructor="YOLOWv5OptimizerConstructor",
@@ -156,11 +159,9 @@ val_evaluator = dict(
     metric="bbox",
 )
 
-# auto_scale_lr = dict(base_batch_size=8 * train_batch_size_per_gpu, enable=True)
-
 vis_backends = [
     dict(type="LocalVisBackend"),
-    dict(type="WandbVisBackend", init_kwargs={"project": "yolo-world", "entity": "algo", "name": f"finetune_s_rf100_{dataset_name}_1e-3_tal_vf_giou"}),
+    dict(type="WandbVisBackend", init_kwargs={"project": "yolo-world", "entity": "algo", "name": f"finetune_s_rf100_{dataset_name}_yolonas_tal_giou_vf"}),
 ]
 
 visualizer = dict(type="mmdet.DetLocalVisualizer", vis_backends=vis_backends, name="visualizer")
