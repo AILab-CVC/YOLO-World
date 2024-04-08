@@ -9,7 +9,7 @@ num_training_classes = 80
 max_epochs = 100  # Maximum training epochs
 close_mosaic_epochs = 2
 save_epoch_intervals = 2
-text_channels = 512
+text_channels = 768
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
 base_lr = 2e-3
@@ -131,7 +131,7 @@ train_dataloader = dict(batch_size=train_batch_size_per_gpu,
                                      ignore_keys=['classes', 'palette']))
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile'),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
