@@ -1,18 +1,14 @@
 # Copyright (c) Tencent Inc. All rights reserved.
-__version__ = '0.1.0'
+from yolo_world import __version__
 
-
-def parse_version_info(version_str):
+def __version_info() -> tuple:
     """Parse a version string into a tuple.
-
-    Args:
-        version_str (str): The version string.
     Returns:
         tuple[int | str]: The version info, e.g., "1.3.0" is parsed into
             (1, 3, 0), and "2.0.0rc1" is parsed into (2, 0, 0, 'rc1').
     """
     version_info = []
-    for x in version_str.split('.'):
+    for x in __version__.split('.'):
         if x.isdigit():
             version_info.append(int(x))
         elif x.find('rc') != -1:
@@ -22,6 +18,6 @@ def parse_version_info(version_str):
     return tuple(version_info)
 
 
-version_info = parse_version_info(__version__)
+version_info = __version_info()
 
-__all__ = ['__version__', 'version_info', 'parse_version_info']
+__all__ = ['__version__', 'version_info']

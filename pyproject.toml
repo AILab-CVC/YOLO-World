@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yolo_world"
-version = "0.1.0"  # Replace with your actual version
+version = "0.1.0"
 description = "YOLO-World: Real-time Open Vocabulary Object Detection"
 readme = "README.md"
 keywords = ["object detection"]
