@@ -139,7 +139,7 @@ test_pipeline = [
         allow_scale_up=False,
         pad_val=dict(img=114)),
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
-    dict(type='LoadTextFixed'),
+    dict(type='LoadText'),
     dict(type='mmdet.PackDetInputs',
          meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                     'scale_factor', 'pad_param', 'texts'))
