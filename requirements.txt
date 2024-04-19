@@ -10,4 +10,3 @@ supervision==0.18.0
 requests==2.28.2
 tqdm==4.65.0
 rich==13.4.2
--e .
