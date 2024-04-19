@@ -105,7 +105,7 @@ def main():
             score_threshold=args.score_threshold)
         output_names = ['num_dets', 'boxes', 'scores', 'labels']
 
-    if len(args.custom_text) > 0:
+    if args.custom_text is not None and len(args.custom_text) > 0:
         with open(args.custom_text) as f:
             texts = json.load(f)
         texts = [x[0] for x in texts]
