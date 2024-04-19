@@ -134,9 +134,15 @@ git clone --recursive https://github.com/AILab-CVC/YOLO-World.git
 ```
 #### Install
 
+Create a virtual environment:
+
 ```bash
-pip install torch wheel -q
-pip install -e .
+python3 -m venv venv_yolo
+source venv_yolo/bin/activate
+```
+
+```bash
+pip3 install -r requirements.txt
 ```
 
 ### 2. Preparing Data
