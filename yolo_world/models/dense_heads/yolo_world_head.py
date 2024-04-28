@@ -127,7 +127,7 @@ class RepBNContrastiveHead(BaseModule):
         self.norm = build_norm_layer(norm_cfg, embed_dims)[1]
         self.conv = nn.Conv2d(embed_dims, num_guide_embeds, kernel_size=1)
 
-    def forward(self, x: Tensor, w: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """Forward function of contrastive learning."""
         x = self.norm(x)
         x = self.conv(x)
@@ -279,6 +279,64 @@ class YOLOWorldHeadModule(YOLOv8HeadModule):
             return cls_logit, bbox_preds, bbox_dist_preds
         else:
             return cls_logit, bbox_preds
+
+@MODELS.register_module()
+class RepYOLOWorldHeadModule(YOLOWorldHeadModule):
+
+    def __init__(self,
+                 *args,
+                 embed_dims: int,
+                 num_guide: int,
+                 freeze_all: bool = False,
+                 **kwargs) -> None:
+        super().__init__(*args,
+                         embed_dims=embed_dims,
+                         use_bn_head=True,
+                         use_einsum=False,
+                         freeze_all=freeze_all,
+                         **kwargs)
+
+        # using rep head
+        cls_contrasts = []
+        for _ in range(self.num_levels):
+            cls_contrasts.append(
+                RepBNContrastiveHead(
+                    embed_dims=embed_dims,
+                    num_guide_embeds=num_guide,
+                    norm_cfg=self.norm_cfg
+                )
+            )
+        self.cls_contrasts = nn.ModuleList(cls_contrasts)
+
+    def forward_single(self, img_feat: Tensor, cls_pred: nn.ModuleList,
+                       reg_pred: nn.ModuleList,
+                       cls_contrast: nn.ModuleList) -> Tuple:
+        """Forward features from the upstream network."""
+        b, _, h, w = img_feat.shape
+        cls_embed = cls_pred(img_feat)
+        cls_logit = cls_contrast(cls_embed)
+        bbox_dist_preds = reg_pred(img_feat)
+        if self.reg_max > 1:
+            bbox_dist_preds = bbox_dist_preds.reshape(
+                [-1, 4, self.reg_max, h * w]).permute(0, 3, 1, 2)
+
+            # TODO: The get_flops script cannot handle the situation of
+            #  matmul, and needs to be fixed later
+            # bbox_preds = bbox_dist_preds.softmax(3).matmul(self.proj)
+            bbox_preds = bbox_dist_preds.softmax(3).matmul(
+                self.proj.view([-1, 1])).squeeze(-1)
+            bbox_preds = bbox_preds.transpose(1, 2).reshape(b, -1, h, w)
+        else:
+            bbox_preds = bbox_dist_preds
+        if self.training:
+            return cls_logit, bbox_preds, bbox_dist_preds
+        else:
+            return cls_logit, bbox_preds
+
+    def forward(self, img_feats: Tuple[Tensor]) -> Tuple[List]:
+        assert len(img_feats) == self.num_levels
+        return multi_apply(self.forward_single, img_feats, self.cls_preds,
+                           self.reg_preds, self.cls_contrasts)
 
 
 @MODELS.register_module()
