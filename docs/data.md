@@ -51,6 +51,30 @@ We provide the annotations of the pre-training data in the below table:
 
 ### Dataset Class
 
+> For fine-tuning YOLO-World on Close-set Object Detection, using `MultiModalDataset` is recommended.
+
+#### Setting CLASSES/Categories
+
+If you use `COCO-format` custom datasets, you "DO NOT" need to define a dataset class for custom vocabularies/categories.
+Explicitly setting the CLASSES in the config file through `metainfo=dict(classes=your_classes),` is simple:
+
+```python
+
+coco_train_dataset = dict(
+    _delete_=True,
+    type='MultiModalDataset',
+    dataset=dict(
+        type='YOLOv5CocoDataset',
+        metainfo=dict(classes=your_classes),
+        data_root='data/your_data',
+        ann_file='annotations/your_annotation.json',
+        data_prefix=dict(img='images/'),
+        filter_cfg=dict(filter_empty_gt=False, min_size=32)),
+    class_text_path='data/texts/your_class_texts.json',
+    pipeline=train_pipeline)
+```
+
+
 For training YOLO-World, we mainly adopt two kinds of dataset classs:
 
 #### 1. `MultiModalDataset`

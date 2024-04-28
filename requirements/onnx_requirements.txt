@@ -1,0 +1,4 @@
+supervision
+onnx
+onnxruntime
+onnxsim

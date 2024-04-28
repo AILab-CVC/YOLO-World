@@ -6,11 +6,11 @@ import os.path as osp
 
 import torch
 from mmengine.config import Config, DictAction
-from mmengine.runner import Runner
 from mmengine.runner.amp import autocast
 from mmengine.dataset import Compose
 from mmengine.utils import ProgressBar
-from mmyolo.registry import RUNNERS
+from mmdet.apis import init_detector
+from mmdet.utils import get_test_pipeline_cfg
 
 import supervision as sv
 
@@ -34,7 +34,7 @@ def parse_args():
                         type=int,
                         help='keep topk predictions.')
     parser.add_argument('--threshold',
-                        default=0.0,
+                        default=0.1,
                         type=float,
                         help='confidence score threshold for predictions.')
     parser.add_argument('--device',
@@ -67,22 +67,23 @@ def parse_args():
     return args
 
 
-def inference_detector(runner,
-                       image_path,
+def inference_detector(model,
+                       image,
                        texts,
-                       max_dets,
-                       score_thr,
-                       output_dir,
+                       test_pipeline,
+                       max_dets=100,
+                       score_thr=0.3,
+                       output_dir='./work_dir',
                        use_amp=False,
                        show=False,
                        annotation=False):
-    data_info = dict(img_id=0, img_path=image_path, texts=texts)
-    data_info = runner.pipeline(data_info)
+    data_info = dict(img_id=0, img_path=image, texts=texts)
+    data_info = test_pipeline(data_info)
     data_batch = dict(inputs=data_info['inputs'].unsqueeze(0),
                       data_samples=[data_info['data_samples']])
 
     with autocast(enabled=use_amp), torch.no_grad():
-        output = runner.model.test_step(data_batch)[0]
+        output = model.test_step(data_batch)[0]
         pred_instances = output.pred_instances
         pred_instances = pred_instances[pred_instances.scores.float() >
                                         score_thr]
@@ -156,15 +157,15 @@ if __name__ == '__main__':
 
     cfg.work_dir = osp.join('./work_dirs',
                             osp.splitext(osp.basename(args.config))[0])
-
+    # init model
     cfg.load_from = args.checkpoint
+    model = init_detector(cfg, checkpoint=args.checkpoint, device=args.device)
 
-    if 'runner_type' not in cfg:
-        runner = Runner.from_cfg(cfg)
-    else:
-        runner = RUNNERS.build(cfg)
+    # init test pipeline
+    test_pipeline_cfg = get_test_pipeline_cfg(cfg=cfg)
+    # test_pipeline[0].type = 'mmdet.LoadImageFromNDArray'
+    test_pipeline = Compose(test_pipeline_cfg)
 
-    # load text
     if args.text.endswith('.txt'):
         with open(args.text) as f:
             lines = f.readlines()
@@ -176,12 +177,7 @@ if __name__ == '__main__':
     if not osp.exists(output_dir):
         os.mkdir(output_dir)
 
-    runner.call_hook('before_run')
-    runner.load_or_resume()
-    pipeline = cfg.test_dataloader.dataset.pipeline
-    runner.pipeline = Compose(pipeline)
-    runner.model.eval()
-
+    # load images
     if not osp.isfile(args.image):
         images = [
             osp.join(args.image, img) for img in os.listdir(args.image)
@@ -190,12 +186,14 @@ if __name__ == '__main__':
     else:
         images = [args.image]
 
+    # reparameterize texts
+    model.reparameterize(texts)
     progress_bar = ProgressBar(len(images))
     for image_path in images:
-
-        inference_detector(runner,
+        inference_detector(model,
                            image_path,
                            texts,
+                           test_pipeline,
                            args.topk,
                            args.threshold,
                            output_dir=output_dir,

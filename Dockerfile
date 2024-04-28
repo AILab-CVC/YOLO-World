@@ -24,6 +24,8 @@ RUN pip3 install --upgrade pip \
         supervision   \
         mmengine      \
         setuptools    \
+        openmim       \
+    && mim install mmcv==2.0.0 \
     && pip3 install --no-cache-dir --index-url https://download.pytorch.org/whl/cu118 \
         wheel         \
         torch         \

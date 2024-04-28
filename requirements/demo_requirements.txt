@@ -1,0 +1,2 @@
+gradio==4.16.0
+supervision

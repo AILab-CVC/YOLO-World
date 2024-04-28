@@ -1,5 +1,10 @@
 ## Deploy YOLO-World
 
+- [x] ONNX export
+- [x] ONNX demo
+- [ ] TensorRT
+- [ ] TFLite
+
 We provide several ways to deploy YOLO-World with ONNX or TensorRT
 
 ### Priliminaries
@@ -22,6 +27,12 @@ You can also use [`export_onnx.py`](../deploy/export_onnx.py) to obtain the ONNX
 
 ```bash
 PYTHONPATH=./ python deploy/export_onnx.py path/to/config path/to/weights --custom-text path/to/customtexts --opset 11
+```
+
+**Running ONNX demo**
+
+```bash
+python deploy/onnx_demo.py path/to/model.onnx path/to/images path/to/texts
 ```
 
 
