@@ -1,0 +1,8 @@
+onnx==1.15.0
+onnxruntime==1.17.1
+onnx-simplifier==0.4.33
+onnx_graphsurgeon
+simple_onnx_processing_tools
+tensorflow==2.15.0
+psutil==5.9.5
+ml_dtypes==0.2.0
