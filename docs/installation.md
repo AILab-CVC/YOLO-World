@@ -17,7 +17,6 @@ see more in [official guide](https://github.com/open-mmlab/mmcv/tree/master?tab=
 ```bash
 pip install openmim
 mim install mmcv==2.0.0 
-
 ```
 
 **2. using `pip`**:
