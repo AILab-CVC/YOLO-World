@@ -11,8 +11,8 @@ save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 1e-3
-weight_decay = 0.0005
+base_lr = 2e-4
+weight_decay = 0.05
 train_batch_size_per_gpu = 16
 load_from = 'pretrained_models/yolo_world_l_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_cc3mlite_train-ca93cd1f.pth'
 persistent_workers = False
@@ -25,15 +25,16 @@ model = dict(type='YOLOWorldPromptDetector',
              embedding_path='embeddings/clip_vit_b32_coco_80_embeddings.npy',
              prompt_dim=text_channels,
              num_prompts=80,
-             freeze_prompt=True,
+             freeze_prompt=False,
              data_preprocessor=dict(type='YOLOv5DetDataPreprocessor'),
              backbone=dict(_delete_=True,
                            type='MultiModalYOLOBackbone',
                            text_model=None,
                            image_model={{_base_.model.backbone}},
+                           frozen_stages=4,
                            with_text_model=False),
              neck=dict(type='YOLOWorldPAFPN',
-                       freeze_all=False,
+                       freeze_all=True,
                        guide_channels=text_channels,
                        embed_channels=neck_embed_channels,
                        num_heads=neck_num_heads,
@@ -41,7 +42,7 @@ model = dict(type='YOLOWorldPromptDetector',
              bbox_head=dict(type='YOLOWorldHead',
                             head_module=dict(
                                 type='YOLOWorldHeadModule',
-                                freeze_all=False,
+                                freeze_all=True,
                                 use_bn_head=True,
                                 embed_dims=text_channels,
                                 num_classes=num_training_classes)),
@@ -92,18 +93,21 @@ train_cfg = dict(max_epochs=max_epochs,
                  dynamic_intervals=[((max_epochs - close_mosaic_epochs),
                                      _base_.val_interval_stage2)])
 
-optim_wrapper = dict(
-    optimizer=dict(_delete_=True,
-                   type='SGD',
-                   lr=base_lr,
-                   momentum=0.937,
-                   nesterov=True,
-                   weight_decay=weight_decay,
-                   batch_size_per_gpu=train_batch_size_per_gpu),
-    paramwise_cfg=dict(bias_decay_mult=0.0,
-                       norm_decay_mult=0.0,
-                       custom_keys={'logit_scale': dict(weight_decay=0.0)}),
-    constructor='YOLOWv5OptimizerConstructor')
+optim_wrapper = dict(optimizer=dict(
+    _delete_=True,
+    type='AdamW',
+    lr=base_lr,
+    weight_decay=weight_decay,
+    batch_size_per_gpu=train_batch_size_per_gpu),
+                     paramwise_cfg=dict(custom_keys={
+                                            'backbone.text_model':
+                                            dict(lr_mult=0.01),
+                                            'logit_scale':
+                                            dict(weight_decay=0.0),
+                                            'embeddings':
+                                            dict(weight_decay=0.0)
+                                        }),
+                     constructor='YOLOWv5OptimizerConstructor')
 
 # evaluation settings
 val_evaluator = dict(_delete_=True,

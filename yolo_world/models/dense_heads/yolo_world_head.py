@@ -109,6 +109,32 @@ class BNContrastiveHead(BaseModule):
 
 
 @MODELS.register_module()
+class RepBNContrastiveHead(BaseModule):
+    """ Batch Norm Contrastive Head for YOLO-World
+    using batch norm instead of l2-normalization
+    Args:
+        embed_dims (int): embed dim of text and image features
+        norm_cfg (dict): normalization params
+    """
+
+    def __init__(self,
+                 embed_dims: int,
+                 num_guide_embeds: int,
+                 norm_cfg: ConfigDict,
+                 init_cfg: OptConfigType = None) -> None:
+
+        super().__init__(init_cfg=init_cfg)
+        self.norm = build_norm_layer(norm_cfg, embed_dims)[1]
+        self.conv = nn.Conv2d(embed_dims, num_guide_embeds, kernel_size=1)
+
+    def forward(self, x: Tensor, w: Tensor) -> Tensor:
+        """Forward function of contrastive learning."""
+        x = self.norm(x)
+        x = self.conv(x)
+        return x
+
+
+@MODELS.register_module()
 class YOLOWorldHeadModule(YOLOv8HeadModule):
     """Head Module for YOLO-World
 

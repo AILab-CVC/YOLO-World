@@ -6,7 +6,7 @@ custom_imports = dict(imports=['yolo_world'], allow_failed_imports=False)
 num_classes = 80
 num_training_classes = 80
 max_epochs = 40  # Maximum training epochs
-close_mosaic_epochs = 30
+close_mosaic_epochs = 10
 save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
@@ -92,16 +92,14 @@ train_cfg = dict(max_epochs=max_epochs,
                  dynamic_intervals=[((max_epochs - close_mosaic_epochs),
                                      _base_.val_interval_stage2)])
 
-optim_wrapper = dict(
-    optimizer=dict(_delete_=True,
-                   type='SGD',
-                   lr=base_lr,
-                   momentum=0.937,
-                   nesterov=True,
-                   weight_decay=weight_decay,
-                   batch_size_per_gpu=train_batch_size_per_gpu),
-    paramwise_cfg=dict(custom_keys={'logit_scale': dict(weight_decay=0.0)}),
-    constructor='YOLOWv5OptimizerConstructor')
+optim_wrapper = dict(optimizer=dict(
+    _delete_=True,
+    type='SGD',
+    lr=base_lr,
+    momentum=0.937,
+    nesterov=True,
+    weight_decay=weight_decay,
+    batch_size_per_gpu=train_batch_size_per_gpu))
 
 # evaluation settings
 val_evaluator = dict(_delete_=True,
