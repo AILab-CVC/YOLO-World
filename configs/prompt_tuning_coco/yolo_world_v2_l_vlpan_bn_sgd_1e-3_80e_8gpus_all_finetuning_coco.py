@@ -18,7 +18,7 @@ load_from = 'pretrained_models/yolo_world_l_clip_t2i_bn_2e-3adamw_32xb16-100e_ob
 persistent_workers = False
 
 # model settings
-model = dict(type='YOLOWorldPromptDetector',
+model = dict(type='SimpleYOLOWorldDetector',
              mm_neck=True,
              num_train_classes=num_training_classes,
              num_test_classes=num_classes,

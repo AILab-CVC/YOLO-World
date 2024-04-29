@@ -30,7 +30,6 @@ model = dict(type='SimpleYOLOWorldDetector',
                            type='MultiModalYOLOBackbone',
                            text_model=None,
                            image_model={{_base_.model.backbone}},
-                           frozen_stages=4,
                            with_text_model=False),
              neck=dict(type='YOLOWorldPAFPN',
                        guide_channels=num_classes,
@@ -137,15 +136,6 @@ optim_wrapper = dict(optimizer=dict(
     lr=base_lr,
     weight_decay=weight_decay,
     batch_size_per_gpu=train_batch_size_per_gpu),
-                     paramwise_cfg=dict(
-                                        custom_keys={
-                                            'backbone.text_model':
-                                            dict(lr_mult=0.01),
-                                            'logit_scale':
-                                            dict(weight_decay=0.0),
-                                            'embeddings':
-                                            dict(weight_decay=0.0)
-                                        }),
                      constructor='YOLOWv5OptimizerConstructor')
 
 # evaluation settings
@@ -154,4 +144,3 @@ val_evaluator = dict(_delete_=True,
                      proposal_nums=(100, 1, 10),
                      ann_file='data/coco/annotations/instances_val2017.json',
                      metric='bbox')
-find_unused_parameters = True
