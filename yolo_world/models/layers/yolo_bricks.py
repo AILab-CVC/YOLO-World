@@ -212,6 +212,7 @@ class RepConvMaxSigmoidAttnBlock(BaseModule):
             norm_cfg=norm_cfg,
             act_cfg=None) if embed_channels != in_channels else None
         self.bias = nn.Parameter(torch.zeros(num_heads))
+        self.num_heads = num_heads
         self.split_channels = embed_channels // num_heads
         self.guide_convs = nn.ModuleList(
             nn.Conv2d(self.split_channels, guide_channels, 1, bias=False)
@@ -231,18 +232,24 @@ class RepConvMaxSigmoidAttnBlock(BaseModule):
 
         embed = self.embed_conv(x) if self.embed_conv is not None else x
         embed = list(embed.split(self.split_channels, 1))
-        # HxBxNxHxW (H*c=C, H: heads)
-        attn_weight = torch.stack(
-            [conv(x) for conv, x in zip(self.guide_convs, embed)])
-        # HxBxHxW
+        # Bx(MxN)xHxW (H*c=C, H: heads)
+        attn_weight = torch.cat(
+            [conv(x) for conv, x in zip(self.guide_convs, embed)], dim=1)
+        # BxMxNxHxW
+        attn_weight = attn_weight.view(B, self.num_heads, -1, H, W)
+        # attn_weight = torch.stack(
+        #     [conv(x) for conv, x in zip(self.guide_convs, embed)])
+        # BxMxNxHxW -> BxMxHxW
         attn_weight = attn_weight.max(dim=2)[0] / (self.head_channels**0.5)
-        attn_weight = (attn_weight + self.bias.view(-1, 1, 1, 1)).sigmoid()
-        attn_weight = attn_weight.transpose(0, 1).unsqueeze(2)
+        attn_weight = (attn_weight + self.bias.view(1, -1, 1, 1)).sigmoid()
+        # .transpose(0, 1)
+        # BxMx1xHxW
+        attn_weight = attn_weight[:, :, None]
         x = self.project_conv(x)
         # BxHxCxHxW
         x = x.view(B, self.num_heads, -1, H, W)
         x = x * attn_weight
-        x = x.reshape(B, -1, H, W)
+        x = x.view(B, -1, H, W)
         return x
 
 

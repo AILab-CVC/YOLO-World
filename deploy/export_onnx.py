@@ -38,7 +38,7 @@ def parse_args():
                         action='store_true',
                         help='Expore model without NMS')
     parser.add_argument('--work-dir',
-                        default='./work_dir',
+                        default='./work_dirs',
                         help='Path to save export model')
     parser.add_argument('--img-size',
                         nargs='+',
@@ -107,7 +107,7 @@ def main():
                                      keep_top_k=args.keep_topk,
                                      iou_threshold=args.iou_threshold,
                                      score_threshold=args.score_threshold)
-        
+
         output_names = ['num_dets', 'boxes', 'scores', 'labels']
         if args.without_nms:
             output_names = ['scores', 'boxes']
@@ -128,7 +128,8 @@ def main():
         baseModel.reparameterize([texts])
     deploy_model = DeployModel(baseModel=baseModel,
                                backend=backend,
-                               postprocess_cfg=postprocess_cfg)
+                               postprocess_cfg=postprocess_cfg,
+                               with_nms=not args.without_nms)
     deploy_model.eval()
 
     fake_input = torch.randn(args.batch_size, 3,
@@ -152,26 +153,16 @@ def main():
         onnx.checker.check_model(onnx_model)
 
         # Fix tensorrt onnx output shape, just for view
-        if not args.model_only and backend in (MMYOLOBackend.TENSORRT8,
-                                               MMYOLOBackend.TENSORRT7):
-            if args.without_nms:
-                shapes = [
-                    args.batch_size, 1, args.batch_size, args.keep_topk, 4,
-                    args.batch_size, args.keep_topk, args.batch_size,
-                    args.keep_topk
-                ]
-                for i in onnx_model.graph.output:
-                    for j in i.type.tensor_type.shape.dim:
-                        j.dim_param = str(shapes.pop(0))
-            else:
-                shapes = [
-                    args.batch_size, 1, args.batch_size, args.keep_topk, 4,
-                    args.batch_size, args.keep_topk, args.batch_size,
-                    args.keep_topk
-                ]
-                for i in onnx_model.graph.output:
-                    for j in i.type.tensor_type.shape.dim:
-                        j.dim_param = str(shapes.pop(0))
+        if not args.model_only and not args.without_nms and backend in (
+                MMYOLOBackend.TENSORRT8, MMYOLOBackend.TENSORRT7):
+            shapes = [
+                args.batch_size, 1, args.batch_size, args.keep_topk, 4,
+                args.batch_size, args.keep_topk, args.batch_size,
+                args.keep_topk
+            ]
+            for i in onnx_model.graph.output:
+                for j in i.type.tensor_type.shape.dim:
+                    j.dim_param = str(shapes.pop(0))
     if args.simplify:
         try:
             import onnxsim
