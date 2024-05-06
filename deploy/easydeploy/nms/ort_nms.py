@@ -8,7 +8,7 @@ _XYWH2XYXY = torch.tensor([[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0],
                           dtype=torch.float32)
 
 
-def sort_nms_index(nms_index, scores, keep_top_k=-1):
+def sort_nms_index(nms_index, scores, batch_size, keep_top_k=-1):
     """
     first sort the nms_index by batch, and then sort by score in every image result, final apply keep_top_k strategy. In the process, we can also get the number of detections for each image: num_dets
     """
@@ -21,8 +21,7 @@ def sort_nms_index(nms_index, scores, keep_top_k=-1):
     batch_inds = nms_index[:, 0]
 
     # Get the number of detections for each image
-    _, num_dets = torch.unique(batch_inds, return_counts=True)
-    num_dets = num_dets.to(device)
+    num_dets = torch.bincount(batch_inds,minlength=batch_size).to(device)
     # Calculate the sum from front to back
     cumulative_sum = torch.cumsum(num_dets, dim=0).to(device)
     # add initial value 0
@@ -52,7 +51,7 @@ def select_nms_index(
 ):
     if nms_index.numel() == 0:
         return torch.empty(0), torch.empty(0, 4), torch.empty(0), torch.empty(0)
-    nms_index, num_dets = sort_nms_index(nms_index, scores, keep_top_k)
+    nms_index, num_dets = sort_nms_index(nms_index, scores, batch_size, keep_top_k)
     batch_inds, cls_inds = nms_index[:, 0], nms_index[:, 1]
     box_inds = nms_index[:, 2]
 
