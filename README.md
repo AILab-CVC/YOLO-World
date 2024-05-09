@@ -170,7 +170,19 @@ chmod +x tools/dist_test.sh
 
 ## Fine-tuning YOLO-World
 
-We provide the details about fine-tuning YOLO-World in [docs/fine-tuning](./docs/finetuning.md).
+<div align="center">
+<img src="./assets/finetune_yoloworld.png" width=800px>
+</div>
+
+
+YOLO-World supports **zero-shot inference**, and three types of **fine-tuning recipes**: **(1) normal fine-tuning**, **(2) prompt tuning**, and **(3) reparameterized fine-tuning**.
+
+
+* Normal Fine-tuning: we provide the details about fine-tuning YOLO-World in [docs/fine-tuning](./docs/finetuning.md).
+
+* Prompt Tuning: we provide more details ahout prompt tuning in [docs/prompt_yolo_world](./docs/prompt_yolo_world.md).
+
+* Reparameterized Fine-tuning: the reparameterized YOLO-World is more suitable for specific domains far from generic scenes. You can find more details in [`docs/reparameterize`](./docs/reparameterize.md).
 
 ## Deployment
 

@@ -11,7 +11,7 @@ save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 1e-3
+base_lr = 2e-3
 weight_decay = 0.0005
 train_batch_size_per_gpu = 16
 load_from = '../FastDet/output_models/yolo_world_s_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_train-55b943ea_rep_conv.pth'
@@ -32,11 +32,10 @@ model = dict(type='SimpleYOLOWorldDetector',
                            image_model={{_base_.model.backbone}},
                            with_text_model=False),
              neck=dict(type='YOLOWorldPAFPN',
-                       guide_channels=num_classes,
+                       guide_channels=text_channels,
                        embed_channels=neck_embed_channels,
                        num_heads=neck_num_heads,
-                       block_cfg=dict(type='RepConvMaxSigmoidCSPLayerWithTwoConv',
-                                      guide_channels=num_classes)),
+                       block_cfg=dict(type='EfficientCSPLayerWithTwoConv')),
              bbox_head=dict(head_module=dict(type='RepYOLOWorldHeadModule',
                                              embed_dims=text_channels,
                                              num_guide=num_classes,
@@ -139,7 +138,6 @@ optim_wrapper = dict(optimizer=dict(
     weight_decay=weight_decay,
     batch_size_per_gpu=train_batch_size_per_gpu),
                      constructor='YOLOWv5OptimizerConstructor')
-
 
 # evaluation settings
 val_evaluator = dict(_delete_=True,

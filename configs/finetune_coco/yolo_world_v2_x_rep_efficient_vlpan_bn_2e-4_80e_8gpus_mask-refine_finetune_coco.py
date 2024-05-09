@@ -1,6 +1,9 @@
-_base_ = ('../../third_party/mmyolo/configs/yolov8/'
-          'yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco.py')
-custom_imports = dict(imports=['yolo_world'], allow_failed_imports=False)
+_base_ = (
+    '../../third_party/mmyolo/configs/yolov8/'
+    'yolov8_x_mask-refine_syncbn_fast_8xb16-500e_coco.py')
+custom_imports = dict(
+    imports=['yolo_world'],
+    allow_failed_imports=False)
 
 # hyper-parameters
 num_classes = 80
@@ -11,13 +14,12 @@ save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 1e-3
-weight_decay = 0.0005
+base_lr = 2e-4
+weight_decay = 0.05
 train_batch_size_per_gpu = 16
-load_from = '../FastDet/output_models/yolo_world_s_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_train-55b943ea_rep_conv.pth'
+load_from = '../YOLOWorld_Master/yolo_models/'
 persistent_workers = False
-mixup_prob = 0.15
-copypaste_prob = 0.3
+
 
 # model settings
 model = dict(type='SimpleYOLOWorldDetector',
@@ -53,7 +55,7 @@ mosaic_affine_transform = [
          img_scale=_base_.img_scale,
          pad_val=114.0,
          pre_transform=_base_.pre_transform),
-    dict(type='YOLOv5CopyPaste', prob=copypaste_prob),
+    dict(type='YOLOv5CopyPaste', prob=_base_.copypaste_prob),
     dict(
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
@@ -69,7 +71,7 @@ mosaic_affine_transform = [
 train_pipeline = [
     *_base_.pre_transform, *mosaic_affine_transform,
     dict(type='YOLOv5MixUp',
-         prob=mixup_prob,
+         prob=_base_.mixup_prob,
          pre_transform=[*_base_.pre_transform, *mosaic_affine_transform]),
     *_base_.last_transform[:-1], *final_transform
 ]
@@ -131,10 +133,8 @@ train_cfg = dict(max_epochs=max_epochs,
                                      _base_.val_interval_stage2)])
 optim_wrapper = dict(optimizer=dict(
     _delete_=True,
-    type='SGD',
+    type='AdamW',
     lr=base_lr,
-    momentum=0.937,
-    nesterov=True,
     weight_decay=weight_decay,
     batch_size_per_gpu=train_batch_size_per_gpu),
                      constructor='YOLOWv5OptimizerConstructor')

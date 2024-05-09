@@ -49,6 +49,8 @@ def reparameterize_head(state_dict, embeds):
 
 def convert_neck_split_conv(input_state_dict, block_name, text_embeds,
                             num_heads):
+    if block_name + '.guide_fc.weight' not in input_state_dict:
+        return input_state_dict
     guide_fc_weight = input_state_dict[block_name + '.guide_fc.weight']
     guide_fc_bias = input_state_dict[block_name + '.guide_fc.bias']
     guide = text_embeds @ guide_fc_weight.transpose(0,
@@ -77,12 +79,15 @@ def convert_neck_weight(input_state_dict, block_name, embeds, num_heads):
 
 
 def reparameterize_neck(state_dict, embeds, type='conv'):
+
     neck_blocks = [
         'neck.top_down_layers.0.attn_block',
         'neck.top_down_layers.1.attn_block',
         'neck.bottom_up_layers.0.attn_block',
         'neck.bottom_up_layers.1.attn_block'
     ]
+    if "neck.top_down_layers.0.attn_block.bias" not in state_dict:
+        return state_dict
     for block in neck_blocks:
         num_heads = state_dict[block + '.bias'].shape[0]
         if type == 'conv':

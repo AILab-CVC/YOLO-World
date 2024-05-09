@@ -1,5 +1,5 @@
 _base_ = ('../../third_party/mmyolo/configs/yolov8/'
-          'yolov8_x_mask-refine_syncbn_fast_8xb16-500e_coco.py')
+          'yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco.py')
 custom_imports = dict(imports=['yolo_world'], allow_failed_imports=False)
 
 # hyper-parameters
@@ -11,11 +11,13 @@ save_epoch_intervals = 5
 text_channels = 512
 neck_embed_channels = [128, 256, _base_.last_stage_out_channels // 2]
 neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
-base_lr = 2e-3
+base_lr = 2e-4
 weight_decay = 0.05
 train_batch_size_per_gpu = 16
-load_from = '/group/40034/adriancheng/notebooks/rep_models/yolo_world_v2_x_obj365v1_goldg_cc3mlite_pretrain_1280ft-14996a36_repconv.pth'
+load_from = '../FastDet/output_models/pretrain_yolow-v8_s_clipv2_frozen_te_noprompt_t2i_bn_2e-3adamw_scale_lr_wd_32xb16-100e_obj365v1_goldg_cc3mram250k_train_lviseval-e3592307_rep_conv.pth'
 persistent_workers = False
+mixup_prob = 0.15
+copypaste_prob = 0.3
 
 # model settings
 model = dict(type='SimpleYOLOWorldDetector',
@@ -28,14 +30,12 @@ model = dict(type='SimpleYOLOWorldDetector',
                            type='MultiModalYOLOBackbone',
                            text_model=None,
                            image_model={{_base_.model.backbone}},
-                           frozen_stages=4,
                            with_text_model=False),
              neck=dict(type='YOLOWorldPAFPN',
-                       guide_channels=num_classes,
+                       guide_channels=text_channels,
                        embed_channels=neck_embed_channels,
                        num_heads=neck_num_heads,
-                       block_cfg=dict(type='RepConvMaxSigmoidCSPLayerWithTwoConv',
-                                      guide_channels=num_classes)),
+                       block_cfg=dict(type='EfficientCSPLayerWithTwoConv')),
              bbox_head=dict(head_module=dict(type='RepYOLOWorldHeadModule',
                                              embed_dims=text_channels,
                                              num_guide=num_classes,
@@ -53,7 +53,7 @@ mosaic_affine_transform = [
          img_scale=_base_.img_scale,
          pad_val=114.0,
          pre_transform=_base_.pre_transform),
-    dict(type='YOLOv5CopyPaste', prob=_base_.copypaste_prob),
+    dict(type='YOLOv5CopyPaste', prob=copypaste_prob),
     dict(
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
@@ -69,7 +69,7 @@ mosaic_affine_transform = [
 train_pipeline = [
     *_base_.pre_transform, *mosaic_affine_transform,
     dict(type='YOLOv5MixUp',
-         prob=_base_.mixup_prob,
+         prob=mixup_prob,
          pre_transform=[*_base_.pre_transform, *mosaic_affine_transform]),
     *_base_.last_transform[:-1], *final_transform
 ]
@@ -135,16 +135,6 @@ optim_wrapper = dict(optimizer=dict(
     lr=base_lr,
     weight_decay=weight_decay,
     batch_size_per_gpu=train_batch_size_per_gpu),
-                     paramwise_cfg=dict(bias_decay_mult=0.0,
-                                        norm_decay_mult=0.0,
-                                        custom_keys={
-                                            'backbone.text_model':
-                                            dict(lr_mult=0.01),
-                                            'logit_scale':
-                                            dict(weight_decay=0.0),
-                                            'embeddings':
-                                            dict(weight_decay=0.0)
-                                        }),
                      constructor='YOLOWv5OptimizerConstructor')
 
 # evaluation settings
@@ -153,4 +143,3 @@ val_evaluator = dict(_delete_=True,
                      proposal_nums=(100, 1, 10),
                      ann_file='data/coco/annotations/instances_val2017.json',
                      metric='bbox')
-find_unused_parameters = True

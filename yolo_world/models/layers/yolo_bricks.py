@@ -542,7 +542,8 @@ class VanillaSigmoidBlock(BaseModule):
     def forward(self, x: Tensor, guide: Tensor) -> Tensor:
         """Forward process."""
         x = self.project_conv(x)
-        x = x * x.sigmoid()
+        # remove sigmoid
+        # x = x * x.sigmoid()
         return x
 
 

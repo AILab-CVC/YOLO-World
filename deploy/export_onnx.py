@@ -37,6 +37,9 @@ def parse_args():
     parser.add_argument('--without-nms',
                         action='store_true',
                         help='Expore model without NMS')
+    parser.add_argument('--without-bbox-decoder',
+                        action='store_true',
+                        help='Expore model without Bbox Decoder (for INT8 Quantization)')
     parser.add_argument('--work-dir',
                         default='./work_dirs',
                         help='Path to save export model')
@@ -129,7 +132,8 @@ def main():
     deploy_model = DeployModel(baseModel=baseModel,
                                backend=backend,
                                postprocess_cfg=postprocess_cfg,
-                               with_nms=not args.without_nms)
+                               with_nms=not args.without_nms,
+                               without_bbox_decoder=args.without_bbox_decoder)
     deploy_model.eval()
 
     fake_input = torch.randn(args.batch_size, 3,
