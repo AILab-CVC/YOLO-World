@@ -36,10 +36,10 @@ def parse_args():
                         help='Export model only')
     parser.add_argument('--without-nms',
                         action='store_true',
-                        help='Expore model without NMS')
+                        help='Export model without NMS')
     parser.add_argument('--without-bbox-decoder',
                         action='store_true',
-                        help='Expore model without Bbox Decoder (for INT8 Quantization)')
+                        help='Export model without Bbox Decoder (for INT8 Quantization)')
     parser.add_argument('--work-dir',
                         default='./work_dirs',
                         help='Path to save export model')
@@ -112,7 +112,7 @@ def main():
                                      score_threshold=args.score_threshold)
 
         output_names = ['num_dets', 'boxes', 'scores', 'labels']
-        if args.without_nms:
+        if args.without_bbox_decoder or args.without_nms:
             output_names = ['scores', 'boxes']
 
     if args.custom_text is not None and len(args.custom_text) > 0:

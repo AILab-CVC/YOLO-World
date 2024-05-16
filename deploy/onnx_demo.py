@@ -9,10 +9,26 @@ import supervision as sv
 import onnxruntime as ort
 from mmengine.utils import ProgressBar
 
-BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator()
-LABEL_ANNOTATOR = sv.LabelAnnotator()
+BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator(thickness=1)
 MASK_ANNOTATOR = sv.MaskAnnotator()
 
+
+class LabelAnnotator(sv.LabelAnnotator):
+
+    @staticmethod
+    def resolve_text_background_xyxy(
+        center_coordinates,
+        text_wh,
+        position,
+    ):
+        center_x, center_y = center_coordinates
+        text_w, text_h = text_wh
+        return center_x, center_y, center_x + text_w, center_y + text_h
+
+
+LABEL_ANNOTATOR = LabelAnnotator(text_padding=4,
+                                 text_scale=0.5,
+                                 text_thickness=1)
 
 def parse_args():
     parser = argparse.ArgumentParser('YOLO-World ONNX Demo')
@@ -21,7 +37,7 @@ def parse_args():
     parser.add_argument(
         'text',
         help=
-        'detecting texts (str, txt, or json), should be consistent with the ONNX model'
+        'detecting texts (str, or json), should be consistent with the ONNX model'
     )
     parser.add_argument('--output-dir',
                         default='./output',
@@ -78,7 +94,7 @@ def inference(ort_session, image_path, texts, output_dir, size=(640, 640)):
         [pad_param[1], pad_param[0], pad_param[1], pad_param[0]])
     bboxes /= scale_factor
     bboxes[:, 0::2] = np.clip(bboxes[:, 0::2], 0, w)
-    bboxes[:, 1::2] = np.clip(bboxes[:, 1::2], 0, w)
+    bboxes[:, 1::2] = np.clip(bboxes[:, 1::2], 0, h)
     bboxes = bboxes.round().astype('int')
 
     image_out = visualize(ori_image, bboxes, labels, scores, texts)
