@@ -24,7 +24,6 @@ BTW, the COCO fine-tuning results are updated with higher performance (with `mas
 
 ### Reparameterized Training
 
-
 | model | Schedule | `mask-refine` | efficient neck | AP<sup>ZS</sup>|  AP | AP<sub>50</sub> | AP<sub>75</sub> | weights | log |
 | :---- | :-------: | :----------: |:-------------: | :------------: | :-: | :--------------:| :-------------: |:------: | :-: |
 | [YOLO-World-v2-S](./yolo_world_v2_s_rep_vlpan_bn_2e-4_80e_8gpus_mask-refine_finetune_coco.py) | AdamW, 2e-4, 80e | ✔️  | ✖️ | 37.5 | 46.3 | 62.8 | 50.4 | [HF Checkpoints]() | [log]() | 
