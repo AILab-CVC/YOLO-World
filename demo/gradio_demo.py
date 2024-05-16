@@ -25,9 +25,26 @@ from mmyolo.registry import RUNNERS
 sys.path.append('./deploy')
 from easydeploy import model as EM
 
-BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator()
-LABEL_ANNOTATOR = sv.LabelAnnotator()
+BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator(thickness=1)
 MASK_ANNOTATOR = sv.MaskAnnotator()
+
+
+class LabelAnnotator(sv.LabelAnnotator):
+
+    @staticmethod
+    def resolve_text_background_xyxy(
+        center_coordinates,
+        text_wh,
+        position,
+    ):
+        center_x, center_y = center_coordinates
+        text_w, text_h = text_wh
+        return center_x, center_y, center_x + text_w, center_y + text_h
+
+
+LABEL_ANNOTATOR = LabelAnnotator(text_padding=4,
+                                 text_scale=0.5,
+                                 text_thickness=1)
 
 
 def parse_args():
@@ -59,9 +76,9 @@ def run_image(runner,
               score_thr,
               nms_thr,
               image_path='./work_dirs/demo.png'):
-    image.save(image_path)
+    # image.save(image_path)
     texts = [[t.strip()] for t in text.split(',')] + [[' ']]
-    data_info = dict(img_id=0, img_path=image_path, texts=texts)
+    data_info = dict(img_id=0, img=np.array(image), texts=texts)
     data_info = runner.pipeline(data_info)
     data_batch = dict(inputs=data_info['inputs'].unsqueeze(0),
                       data_samples=[data_info['data_samples']])
@@ -230,6 +247,7 @@ if __name__ == '__main__':
     runner.call_hook('before_run')
     runner.load_or_resume()
     pipeline = cfg.test_dataloader.dataset.pipeline
+    pipeline[0].type = 'mmdet.LoadImageFromNDArray'
     runner.pipeline = Compose(pipeline)
     runner.model.eval()
     demo(runner, args)

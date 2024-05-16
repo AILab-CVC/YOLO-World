@@ -98,14 +98,14 @@ class MaxSigmoidAttnBlock(BaseModule):
 
 
 @MODELS.register_module()
-class RepMaxSigmoidAttnBlock(BaseModule):
+class RepMatrixMaxSigmoidAttnBlock(BaseModule):
     """Max Sigmoid attention block."""
 
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
                  embed_channels: int,
-                 num_guide_embeds: int,
+                 guide_channels: int,
                  kernel_size: int = 3,
                  padding: int = 1,
                  num_heads: int = 1,
@@ -136,7 +136,8 @@ class RepMaxSigmoidAttnBlock(BaseModule):
             act_cfg=None) if embed_channels != in_channels else None
         self.bias = nn.Parameter(torch.zeros(num_heads))
         self.guide_weight = nn.Parameter(
-            torch.zeros(num_embeds, embed_channels // num_heads, num_heads))
+            torch.zeros(guide_channels, embed_channels // num_heads,
+                        num_heads))
         self.project_conv = conv(in_channels,
                                  out_channels,
                                  kernel_size,
@@ -146,7 +147,7 @@ class RepMaxSigmoidAttnBlock(BaseModule):
                                  norm_cfg=norm_cfg,
                                  act_cfg=None)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor, txt_feats: Tensor = None) -> Tensor:
         """Forward process."""
         B, _, H, W = x.shape
 
@@ -155,6 +156,7 @@ class RepMaxSigmoidAttnBlock(BaseModule):
 
         batch, m, channel, height, width = embed.shape
         _, n, _, _ = self.guide_weight.shape
+        # can be formulated to split conv
         embed = embed.permute(0, 1, 3, 4, 2)
         embed = embed.reshape(batch, m, -1, channel)
         attn_weight = torch.matmul(embed, self.guide_weight)
@@ -163,12 +165,91 @@ class RepMaxSigmoidAttnBlock(BaseModule):
         attn_weight = attn_weight.max(dim=-1)[0]
         attn_weight = attn_weight / (self.head_channels**0.5)
         attn_weight = attn_weight + self.bias[None, :, None, None]
-        attn_weight = attn_weight.sigmoid() * self.scale
+        attn_weight = attn_weight.sigmoid()
 
         x = self.project_conv(x)
         x = x.reshape(B, self.num_heads, -1, H, W)
         x = x * attn_weight.unsqueeze(2)
         x = x.reshape(B, -1, H, W)
+        return x
+
+
+@MODELS.register_module()
+class RepConvMaxSigmoidAttnBlock(BaseModule):
+    """Max Sigmoid attention block."""
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 embed_channels: int,
+                 guide_channels: int,
+                 kernel_size: int = 3,
+                 padding: int = 1,
+                 num_heads: int = 1,
+                 use_depthwise: bool = False,
+                 with_scale: bool = False,
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: ConfigType = dict(type='BN',
+                                             momentum=0.03,
+                                             eps=0.001),
+                 init_cfg: OptMultiConfig = None,
+                 use_einsum: bool = True) -> None:
+        super().__init__(init_cfg=init_cfg)
+        conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
+
+        assert (out_channels % num_heads == 0 and
+                embed_channels % num_heads == 0), \
+            'out_channels and embed_channels should be divisible by num_heads.'
+        self.num_heads = num_heads
+        self.head_channels = out_channels // num_heads
+        self.use_einsum = use_einsum
+
+        self.embed_conv = ConvModule(
+            in_channels,
+            embed_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=None) if embed_channels != in_channels else None
+        self.bias = nn.Parameter(torch.zeros(num_heads))
+        self.num_heads = num_heads
+        self.split_channels = embed_channels // num_heads
+        self.guide_convs = nn.ModuleList(
+            nn.Conv2d(self.split_channels, guide_channels, 1, bias=False)
+            for _ in range(num_heads))
+        self.project_conv = conv(in_channels,
+                                 out_channels,
+                                 kernel_size,
+                                 stride=1,
+                                 padding=padding,
+                                 conv_cfg=conv_cfg,
+                                 norm_cfg=norm_cfg,
+                                 act_cfg=None)
+
+    def forward(self, x: Tensor, txt_feats: Tensor = None) -> Tensor:
+        """Forward process."""
+        B, C, H, W = x.shape
+
+        embed = self.embed_conv(x) if self.embed_conv is not None else x
+        embed = list(embed.split(self.split_channels, 1))
+        # Bx(MxN)xHxW (H*c=C, H: heads)
+        attn_weight = torch.cat(
+            [conv(x) for conv, x in zip(self.guide_convs, embed)], dim=1)
+        # BxMxNxHxW
+        attn_weight = attn_weight.view(B, self.num_heads, -1, H, W)
+        # attn_weight = torch.stack(
+        #     [conv(x) for conv, x in zip(self.guide_convs, embed)])
+        # BxMxNxHxW -> BxMxHxW
+        attn_weight = attn_weight.max(dim=2)[0] / (self.head_channels**0.5)
+        attn_weight = (attn_weight + self.bias.view(1, -1, 1, 1)).sigmoid()
+        # .transpose(0, 1)
+        # BxMx1xHxW
+        attn_weight = attn_weight[:, :, None]
+        x = self.project_conv(x)
+        # BxHxCxHxW
+        x = x.view(B, self.num_heads, -1, H, W)
+        x = x * attn_weight
+        x = x.view(B, -1, H, W)
         return x
 
 
@@ -236,7 +317,7 @@ class RepMaxSigmoidCSPLayerWithTwoConv(CSPLayerWithTwoConv):
             self,
             in_channels: int,
             out_channels: int,
-            num_guided_embed: int,
+            guide_channels: int,
             embed_channels: int,
             num_heads: int = 1,
             expand_ratio: float = 0.5,
@@ -265,11 +346,68 @@ class RepMaxSigmoidCSPLayerWithTwoConv(CSPLayerWithTwoConv):
                                      norm_cfg=norm_cfg,
                                      act_cfg=act_cfg)
 
-        self.attn_block = RepMaxSigmoidAttnBlock(
+        self.attn_block = RepMatrixMaxSigmoidAttnBlock(
             self.mid_channels,
             self.mid_channels,
             embed_channels=embed_channels,
-            num_guided_embed=num_guided_embed,
+            guide_channels=guide_channels,
+            num_heads=num_heads,
+            with_scale=with_scale,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            use_einsum=use_einsum)
+
+    def forward(self, x: Tensor, guide: Tensor) -> Tensor:
+        """Forward process."""
+        x_main = self.main_conv(x)
+        x_main = list(x_main.split((self.mid_channels, self.mid_channels), 1))
+        x_main.extend(blocks(x_main[-1]) for blocks in self.blocks)
+        x_main.append(self.attn_block(x_main[-1], guide))
+        return self.final_conv(torch.cat(x_main, 1))
+
+
+@MODELS.register_module()
+class RepConvMaxSigmoidCSPLayerWithTwoConv(CSPLayerWithTwoConv):
+    """Sigmoid-attention based CSP layer with two convolution layers."""
+
+    def __init__(
+            self,
+            in_channels: int,
+            out_channels: int,
+            guide_channels: int,
+            embed_channels: int,
+            num_heads: int = 1,
+            expand_ratio: float = 0.5,
+            num_blocks: int = 1,
+            with_scale: bool = False,
+            add_identity: bool = True,  # shortcut
+            conv_cfg: OptConfigType = None,
+            norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
+            act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+            init_cfg: OptMultiConfig = None,
+            use_einsum: bool = True) -> None:
+        super().__init__(in_channels=in_channels,
+                         out_channels=out_channels,
+                         expand_ratio=expand_ratio,
+                         num_blocks=num_blocks,
+                         add_identity=add_identity,
+                         conv_cfg=conv_cfg,
+                         norm_cfg=norm_cfg,
+                         act_cfg=act_cfg,
+                         init_cfg=init_cfg)
+
+        self.final_conv = ConvModule((3 + num_blocks) * self.mid_channels,
+                                     out_channels,
+                                     1,
+                                     conv_cfg=conv_cfg,
+                                     norm_cfg=norm_cfg,
+                                     act_cfg=act_cfg)
+
+        self.attn_block = RepConvMaxSigmoidAttnBlock(
+            self.mid_channels,
+            self.mid_channels,
+            embed_channels=embed_channels,
+            guide_channels=guide_channels,
             num_heads=num_heads,
             with_scale=with_scale,
             conv_cfg=conv_cfg,
@@ -404,7 +542,8 @@ class VanillaSigmoidBlock(BaseModule):
     def forward(self, x: Tensor, guide: Tensor) -> Tensor:
         """Forward process."""
         x = self.project_conv(x)
-        x = x * x.sigmoid()
+        # remove sigmoid
+        # x = x * x.sigmoid()
         return x
 
 

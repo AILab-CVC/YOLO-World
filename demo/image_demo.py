@@ -14,9 +14,26 @@ from mmdet.utils import get_test_pipeline_cfg
 
 import supervision as sv
 
-BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator()
-LABEL_ANNOTATOR = sv.LabelAnnotator()
+BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator(thickness=1)
 MASK_ANNOTATOR = sv.MaskAnnotator()
+
+
+class LabelAnnotator(sv.LabelAnnotator):
+
+    @staticmethod
+    def resolve_text_background_xyxy(
+        center_coordinates,
+        text_wh,
+        position,
+    ):
+        center_x, center_y = center_coordinates
+        text_w, text_h = text_wh
+        return center_x, center_y, center_x + text_w, center_y + text_h
+
+
+LABEL_ANNOTATOR = LabelAnnotator(text_padding=4,
+                                 text_scale=0.5,
+                                 text_thickness=1)
 
 
 def parse_args():

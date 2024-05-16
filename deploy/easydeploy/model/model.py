@@ -27,11 +27,15 @@ class DeployModel(nn.Module):
     def __init__(self,
                  baseModel: nn.Module,
                  backend: MMYOLOBackend,
-                 postprocess_cfg: Optional[ConfigDict] = None):
+                 postprocess_cfg: Optional[ConfigDict] = None,
+                 with_nms=True,
+                 without_bbox_decoder=False):
         super().__init__()
         self.baseModel = baseModel
         self.baseHead = baseModel.bbox_head
         self.backend = backend
+        self.with_nms = with_nms
+        self.without_bbox_decoder = without_bbox_decoder
         if postprocess_cfg is None:
             self.with_postprocess = False
         else:
@@ -86,7 +90,7 @@ class DeployModel(nn.Module):
                      bbox_preds: List[Tensor],
                      objectnesses: Optional[List[Tensor]] = None,
                      coeff_preds: Optional[List[Tensor]] = None,
-                     proto_preds: Optional[List[Tensor]] = None,                     
+                     proto_preds: Optional[List[Tensor]] = None,
                      **kwargs):
         assert len(cls_scores) == len(bbox_preds)
         dtype = cls_scores[0].dtype
@@ -101,15 +105,16 @@ class DeployModel(nn.Module):
             bbox_decoder = yolox_bbox_decoder
         else:
             bbox_decoder = self.bbox_decoder
-
+        print(bbox_decoder)
+        
         num_imgs = cls_scores[0].shape[0]
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
 
-        mlvl_priors = self.prior_generate(
-            featmap_sizes, dtype=dtype, device=device)
+        mlvl_priors = self.prior_generate(featmap_sizes,
+                                          dtype=dtype,
+                                          device=device)
 
         flatten_priors = torch.cat(mlvl_priors)
-
         mlvl_strides = [
             flatten_priors.new_full(
                 (featmap_size[0] * featmap_size[1] * self.num_base_priors, ),
@@ -118,8 +123,6 @@ class DeployModel(nn.Module):
         ]
         flatten_stride = torch.cat(mlvl_strides)
 
-        # flatten cls_scores, bbox_preds and objectness
-        # using score.shape
         text_len = cls_scores[0].shape[1]
         flatten_cls_scores = [
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1, text_len)
@@ -142,12 +145,18 @@ class DeployModel(nn.Module):
             cls_scores = cls_scores * (flatten_objectness.unsqueeze(-1))
 
         scores = cls_scores
-
+        bboxes = flatten_bbox_preds
+        if self.without_bbox_decoder:
+            return scores, bboxes
         bboxes = bbox_decoder(flatten_priors[None], flatten_bbox_preds,
                               flatten_stride)
 
-        return nms_func(bboxes, scores, self.keep_top_k, self.iou_threshold,
-                        self.score_threshold, self.pre_top_k, self.keep_top_k)
+        if self.with_nms:
+            return nms_func(bboxes, scores, self.keep_top_k,
+                            self.iou_threshold, self.score_threshold,
+                            self.pre_top_k, self.keep_top_k)
+        else:
+            return scores, bboxes
 
     def select_nms(self):
         if self.backend in (MMYOLOBackend.ONNXRUNTIME, MMYOLOBackend.OPENVINO):

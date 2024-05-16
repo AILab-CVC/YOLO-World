@@ -103,7 +103,7 @@ class YOLOWorldPAFPN(YOLOv8PAFPN):
                  act_cfg=self.act_cfg))
         return MODELS.build(block_cfg)
 
-    def forward(self, img_feats: List[Tensor], txt_feats: Tensor) -> tuple:
+    def forward(self, img_feats: List[Tensor], txt_feats: Tensor = None) -> tuple:
         """Forward function.
         including multi-level image features, text features: BxLxD
         """
