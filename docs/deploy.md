@@ -29,6 +29,17 @@ You can also use [`export_onnx.py`](../deploy/export_onnx.py) to obtain the ONNX
 PYTHONPATH=./ python deploy/export_onnx.py path/to/config path/to/weights --custom-text path/to/customtexts --opset 11
 ```
 
+If you don't want to include `NMS` or "post-processing" into the ONNX model, you can add `--without-nms`
+```bash
+PYTHONPATH=./ python deploy/export_onnx.py path/to/config path/to/weights --custom-text path/to/customtexts --opset 11 --without-nms
+```
+
+If you want to quantize YOLO-World with ONNX model, you'd better remove `NMS` and `bbox_decoder` by adding `--without-bbox-decoder`
+
+```bash
+PYTHONPATH=./ python deploy/export_onnx.py path/to/config path/to/weights --custom-text path/to/customtexts --opset 11 --without-bbox-decoder
+```
+
 **Running ONNX demo**
 
 ```bash
