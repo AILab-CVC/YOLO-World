@@ -227,4 +227,4 @@ If you find YOLO-World is useful in your research or applications, please consid
 ```
 
 ## Licence
-YOLO-World is under the GPL-v3 Licence and is supported for comercial usage.
+YOLO-World is under the GPL-v3 Licence and is supported for commercial usage. If you need a commercial license for YOLO-World, please feel free to contact us.
