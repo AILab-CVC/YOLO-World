@@ -306,5 +306,4 @@ class Decoder:
                         conf_thres: float,
                         num_labels: int = 80,
                         **kwargs):
-        reg_max: int = kwargs.get('reg_max', 16)
-        self.__ppyoloe_decode(feats, conf_thres, num_labels, reg_max=reg_max)
+        self.__yolov6_decode(feats, conf_thres, num_labels)
