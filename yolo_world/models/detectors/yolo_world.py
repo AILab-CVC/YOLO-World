@@ -79,6 +79,9 @@ class YOLOWorldDetector(YOLODetector):
         if batch_data_samples is None:
             texts = self.texts
             txt_feats = self.text_feats
+            batch_size=batch_inputs.shape[0]
+            texts = texts * batch_size
+            txt_feats = txt_feats.repeat(batch_size, 1, 1)
         elif isinstance(batch_data_samples,
                         dict) and 'texts' in batch_data_samples:
             texts = batch_data_samples['texts']
