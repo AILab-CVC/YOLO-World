@@ -39,7 +39,7 @@ class MaxSigmoidAttnBlock(BaseModule):
                 embed_channels % num_heads == 0), \
             'out_channels and embed_channels should be divisible by num_heads.'
         self.num_heads = num_heads
-        self.head_channels = out_channels // num_heads
+        self.head_channels = embed_channels // num_heads
         self.use_einsum = use_einsum
 
         self.embed_conv = ConvModule(
