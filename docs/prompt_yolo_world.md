@@ -3,16 +3,16 @@
 
 ### 1. Simple YOLO-World with Embeddings
 
-For simplifying YOLO-World and get rid of the language model, we define a new basic detector `YOLOWorldPromptDetector`:
+For simplifying YOLO-World and get rid of the language model, we define a new basic detector `SimpleYOLOWorldDetector`:
 
-The `YOLOWorldPromptDetector` supports prompt embeddings as the input and doesn't not contain a language model anymore!
+The `SimpleYOLOWorldDetector` supports prompt embeddings as the input and doesn't not contain a language model anymore!
 Now, YOLO-World adopts `embeddings` as language inputs, and the embeddings support several kinds: (1) text embeddings from the language model, e.g., CLIP language encoder, (2) image embeddings from a vision model, e.g., CLIP vision encoder, and (3) image-text fused embeddings, and (4) random embeddings.
 The (1)(2)(3) supports zero-shot inference and (4), including (1)(2)(3) are designed for prompt tuning on your custom data.
 
 The basic detector is defined as follows:
 
 ```python
-class YOLOWorldPromptDetector(YOLODetector):
+class SimpleYOLOWorldDetector(YOLODetector):
     """Implementation of YOLO World Series"""
 
     def __init__(self,
@@ -40,7 +40,7 @@ For more details about writing configs for prompt tuning, you can refer to [`pro
 1. Use random prompts
 
 ```python
-dict(type='YOLOWorldPromptDetector',
+dict(type='SimpleYOLOWorldDetector',
              mm_neck=True,
              num_train_classes=num_training_classes,
              num_test_classes=num_classes,
@@ -54,7 +54,7 @@ dict(type='YOLOWorldPromptDetector',
 the `clip_vit_b32_coco_80_embeddings.npy` can be downloaded at [HuggingFace](https://huggingface.co/wondervictor/YOLO-World/blob/main/clip_vit_b32_coco_80_embeddings.npy).
 
 ```python
-dict(type='YOLOWorldPromptDetector',
+dict(type='SimpleYOLOWorldDetector',
              mm_neck=True,
              num_train_classes=num_training_classes,
              num_test_classes=num_classes,

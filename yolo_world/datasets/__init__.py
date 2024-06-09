@@ -8,10 +8,12 @@ from .utils import yolow_collate
 from .transformers import *  # NOQA
 from .yolov5_v3det import YOLOv5V3DetDataset
 from .yolov5_lvis import YOLOv5LVISV1Dataset
+from .yolov5_cc3m_grounding import YOLOv5GeneralGroundingDataset
 
 __all__ = [
     'MultiModalDataset', 'YOLOv5Objects365V1Dataset',
     'YOLOv5Objects365V2Dataset', 'YOLOv5MixedGroundingDataset',
     'YOLOv5V3DetDataset', 'yolow_collate',
     'YOLOv5LVISV1Dataset', 'MultiModalMixedDataset',
+    'YOLOv5GeneralGroundingDataset'
 ]
