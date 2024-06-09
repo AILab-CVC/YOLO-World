@@ -15,7 +15,7 @@ base_lr = 2e-4
 weight_decay = 0.05
 train_batch_size_per_gpu = 16
 text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
-# text_model_name = 'openai/clip-vit-base-patch32'
+text_model_name = 'openai/clip-vit-base-patch32'
 persistent_workers = False
 
 # scaling model from X to XL

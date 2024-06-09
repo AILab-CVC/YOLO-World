@@ -18,7 +18,7 @@ train_batch_size_per_gpu = 16
 text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
 img_scale = (1280, 1280)
 
-# text_model_name = 'openai/clip-vit-base-patch32'
+text_model_name = 'openai/clip-vit-base-patch32'
 # model settings
 model = dict(
     type='YOLOWorldDetector',

@@ -16,7 +16,7 @@ base_lr = 2e-3
 weight_decay = 0.05 / 2
 train_batch_size_per_gpu = 16
 text_model_name = 'openai/clip-vit-large-patch14-336'
-# text_model_name = 'openai/clip-vit-base-patch32'
+text_model_name = 'openai/clip-vit-base-patch32'
 # model settings
 model = dict(
     type='YOLOWorldDetector',

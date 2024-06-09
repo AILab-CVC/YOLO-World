@@ -19,7 +19,7 @@ weight_decay = 0.05
 train_batch_size_per_gpu = 16
 load_from = 'pretrained_models/yolo_world_x_clip_t2i_bn_2e-3adamw_32xb16-100e_obj365v1_goldg_cc250k_train_lviseval-8698fbfa.pth'
 text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
-# text_model_name = 'openai/clip-vit-base-patch32'
+text_model_name = 'openai/clip-vit-base-patch32'
 persistent_workers = False
 
 # model settings
