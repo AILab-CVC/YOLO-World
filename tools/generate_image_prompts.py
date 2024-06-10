@@ -26,16 +26,6 @@ if __name__ == "__main__":
     text_model = CLIPTextModelWithProjection.from_pretrained(args.model)
     processor = AutoProcessor.from_pretrained(args.model)
 
-    # padding prompts
-    device = 'cuda:0'
-    text_model.to(device)
-    texts = tokenizer(text=[' '], return_tensors='pt', padding=True)
-    texts = texts.to(device)
-    text_outputs = text_model(**texts)
-    txt_feats = text_outputs.text_embeds
-    txt_feats = txt_feats / txt_feats.norm(p=2, dim=-1, keepdim=True)
-    txt_feats = txt_feats.reshape(-1, txt_feats.shape[-1]).cpu().data.numpy()
-
     images = os.listdir(args.image_dir)
     category_embeds = []
 
@@ -54,6 +44,5 @@ if __name__ == "__main__":
 
     for image_ in tqdm.tqdm(images):
         _forward_vision_model(image_)
-    category_embeds.append(txt_feats)
     category_embeds = np.stack(category_embeds)
     np.save(osp.join(args.out_dir, args.out_file), category_embeds)
