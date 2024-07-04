@@ -1,0 +1,10 @@
+addict
+albumentations
+iopath
+opencv-python==4.10.0.84
+pycocotools
+supervision
+tabulate
+torchvision
+transformers
+yapf

@@ -1,0 +1,37 @@
+{
+    "yoloworld_data_preprocessor": {
+        "mean": [0, 0, 0],
+        "std": [255, 255, 255],
+        "bgr_to_rgb": true,
+        "non_blocking": true
+    },
+    "yolov8_backbone": {
+        "last_stage_out_channels": 512,
+        "deepen_factor": 1.00,
+        "widen_factor": 1.00
+    },
+    "yoloworld_text": {
+        "model_name": "openai/clip-vit-base-patch32",
+        "frozen_modules": ["all"],
+        "channels": 512
+    },
+    "yoloworld_neck": {
+        "in_channels": [256, 512, 512],
+        "out_channels": [256, 512, 512],
+        "embed_channels": [128, 256, 256],
+        "num_heads": [4, 8, 8]
+    },
+    "yoloworld_backbone": {
+        "with_text_model": true
+    },
+    "yoloworld_head_module": {
+        "use_bn_head": true,
+        "use_einsum": true
+    },
+    "yoloworld_detector": {
+        "num_train_classes": 80,
+        "num_test_classes": 1203,
+        "mm_neck": true,
+        "use_syncbn": true
+    }
+}

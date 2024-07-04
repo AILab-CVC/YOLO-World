@@ -1,0 +1,37 @@
+repos:
+  # flake8
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.0
+    hooks:
+      - id: flake8
+        args: ["--config=setup.cfg", "--ignore=W504, W503"]
+
+  # modify known_third_party
+  - repo: https://github.com/asottile/seed-isort-config
+    rev: v2.2.0
+    hooks:
+      - id: seed-isort-config
+
+  # isort
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+
+  # yapf
+  - repo: https://github.com/pre-commit/mirrors-yapf
+    rev: v0.32.0
+    hooks:
+      - id: yapf
+
+  # pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace  # Trim trailing whitespace
+      - id: check-yaml  # Attempt to load all yaml files to verify syntax
+      - id: check-merge-conflict  # Check for files that contain merge conflict strings
+      - id: end-of-file-fixer  # Make sure files end in a newline and only a newline
+      - id: requirements-txt-fixer  # Sort entries in requirements.txt and remove incorrect entry for pkg-resources==0.0.0
+      - id: mixed-line-ending  # Replace or check mixed line ending
+        args: ["--fix=lf"]
