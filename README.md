@@ -34,6 +34,8 @@
 
 We recommend that everyone **use English to communicate on issues**, as this helps developers from around the world discuss, share experiences, and answer questions together.
 
+For business licensing and other related inquiries, don't hesitate to contact `yixiaoge@tencent.com`.
+
 ## 🔥 Updates 
 `[2024-7-8]`: YOLO-World now has been integrated into [ComfyUI](https://github.com/StevenGrove/ComfyUI-YOLOWorld)! Come and try adding YOLO-World to your workflow now! You can access it at [StevenGrove/ComfyUI-YOLOWorld](https://github.com/StevenGrove/ComfyUI-YOLOWorld)!  
 `[2024-5-18]:` YOLO-World models have been [integrated with the FiftyOne computer vision toolkit](https://docs.voxel51.com/integrations/ultralytics.html#open-vocabulary-detection) for streamlined open-vocabulary inference across image and video datasets.  
