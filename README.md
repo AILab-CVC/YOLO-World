@@ -19,9 +19,9 @@
 [![arxiv paper](https://img.shields.io/badge/Project-Page-green)](https://wondervictor.github.io/)
 [![arxiv paper](https://img.shields.io/badge/arXiv-Paper-red)](https://arxiv.org/abs/2401.17270)
 <a href="https://colab.research.google.com/github/AILab-CVC/YOLO-World/blob/master/inference.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"></a>
-[![demo](https://img.shields.io/badge/🤗HugginngFace-Spaces-orange)](https://huggingface.co/spaces/stevengrove/YOLO-World)
+[![demo](https://img.shields.io/badge/🤗HuggingFace-Spaces-orange)](https://huggingface.co/spaces/stevengrove/YOLO-World)
 [![Replicate](https://replicate.com/zsxkib/yolo-world/badge)](https://replicate.com/zsxkib/yolo-world)
-[![hfpaper](https://img.shields.io/badge/🤗HugginngFace-Paper-yellow)](https://huggingface.co/papers/2401.17270)
+[![hfpaper](https://img.shields.io/badge/🤗HuggingFace-Paper-yellow)](https://huggingface.co/papers/2401.17270)
 [![license](https://img.shields.io/badge/License-GPLv3.0-blue)](LICENSE)
 [![yoloworldseg](https://img.shields.io/badge/YOLOWorldxEfficientSAM-🤗Spaces-orange)](https://huggingface.co/spaces/SkalskiP/YOLO-World)
 [![yologuide](https://img.shields.io/badge/📖Notebook-roboflow-purple)](https://supervision.roboflow.com/develop/notebooks/zero-shot-object-detection-with-yolo-world)
