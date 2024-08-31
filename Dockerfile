@@ -35,12 +35,19 @@ RUN pip3 install --upgrade pip \
     && mim install mmdet==3.3.0 \
     && pip install git+https://github.com/onuralpszr/mmyolo.git
 
-COPY . /yolo
+RUN git clone https://github.com/tim-win/YOLO-World /yolo/
+
 WORKDIR /yolo
 
 RUN pip3 install -e .[demo]
 
 RUN pip3 install onnx onnxsim
+RUN cd third_party && git clone https://github.com/onuralpszr/mmyolo.git ./mmyolo/
+
+RUN chmod a+rwx /weights/
+RUN chmod a+rwx /yolo/configs/*/*
+
+
 
 CMD [ "python3", "demo/gradio_demo.py" ]
 # CMD ["configs/pretrain/$MODEL", "weights/$WEIGHT"]
