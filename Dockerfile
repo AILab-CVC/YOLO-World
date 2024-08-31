@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-wheel
 
 RUN pip3 install --upgrade pip \
+    && pip install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0+cu113 --index-url https://download.pytorch.org/whl/cu113 \
     && pip3 install   \
         gradio        \
         opencv-python \
@@ -25,7 +26,7 @@ RUN pip3 install --upgrade pip \
         mmengine      \
         setuptools    \
         openmim       \
-    && mim install mmcv==2.0.0 \
+    && mim install 'mmcv<=2.2.0' \
     && pip3 install --no-cache-dir --index-url https://download.pytorch.org/whl/cu118 \
         wheel         \
         torch         \
@@ -35,9 +36,16 @@ RUN pip3 install --upgrade pip \
 COPY . /yolo
 WORKDIR /yolo
 
-RUN pip3 install -e .
+RUN pip3 install -e .[demo]
+
+RUN pip3 install onnx
+
+RUN apt install -y curl
+RUN mkdir weights
 
 RUN curl -o weights/$WEIGHT -L https://huggingface.co/wondervictor/YOLO-World/resolve/main/$WEIGHT
 
-ENTRYPOINT [ "python3", "demo.py" ]
+RUN pip3 install onnxsim
+
+ENTRYPOINT [ "python3", "demo/gradio_demo.py" ]
 CMD ["configs/pretrain/$MODEL", "weights/$WEIGHT"]
