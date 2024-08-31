@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.0-devel-ubuntu22.04
 
 ARG MODEL="yolo_world_l_dual_vlpan_l2norm_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py"
 ARG WEIGHT="yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth"
@@ -15,37 +15,32 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0    \
     git             \
     python3-dev     \
-    python3-wheel
+    python3-wheel   \
+    curl
+
+RUN mkdir weights
+RUN curl -o weights/$WEIGHT -L https://huggingface.co/wondervictor/YOLO-World/resolve/main/$WEIGHT
 
 RUN pip3 install --upgrade pip \
-    && pip install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0+cu113 --index-url https://download.pytorch.org/whl/cu113 \
+    && pip3 install wheel \
+    && pip3 install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu121 \
     && pip3 install   \
-        gradio        \
-        opencv-python \
-        supervision   \
-        mmengine      \
-        setuptools    \
-        openmim       \
-    && mim install 'mmcv<=2.2.0' \
-    && pip3 install --no-cache-dir --index-url https://download.pytorch.org/whl/cu118 \
-        wheel         \
-        torch         \
-        torchvision   \
-        torchaudio
+        gradio==4.16.0 \
+        opencv-python==4.9.0.80 \
+        supervision \
+        mmengine==0.10.4 \
+        setuptools \
+        openmim \
+    && mim install mmcv==2.1.0 \
+    && mim install mmdet==3.3.0 \
+    && pip install git+https://github.com/onuralpszr/mmyolo.git
 
 COPY . /yolo
 WORKDIR /yolo
 
 RUN pip3 install -e .[demo]
 
-RUN pip3 install onnx
+RUN pip3 install onnx onnxsim
 
-RUN apt install -y curl
-RUN mkdir weights
-
-RUN curl -o weights/$WEIGHT -L https://huggingface.co/wondervictor/YOLO-World/resolve/main/$WEIGHT
-
-RUN pip3 install onnxsim
-
-ENTRYPOINT [ "python3", "demo/gradio_demo.py" ]
-CMD ["configs/pretrain/$MODEL", "weights/$WEIGHT"]
+CMD [ "python3", "demo/gradio_demo.py" ]
+# CMD ["configs/pretrain/$MODEL", "weights/$WEIGHT"]
