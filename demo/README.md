@@ -19,11 +19,24 @@ pip install gradio==4.16.0
 python demo/demo.py path/to/config path/to/weights
 ```
 
-Additionaly, you can use a Dockerfile to build an image with gradio. As a prerequisite, make sure you have respective drivers installed alongside [nvidia-container-runtime](https://stackoverflow.com/questions/59691207/docker-build-with-nvidia-runtime). Replace MODEL_NAME and WEIGHT_NAME with the respective values or ommit this and use default values from the [Dockerfile](Dockerfile#3)
+Additionally, you can use our Docker build system for an easier setup:
 
 ```bash
-docker build --build-arg="MODEL=MODEL_NAME" --build-arg="WEIGHT=WEIGHT_NAME" -t yolo_demo .
-docker run --runtime nvidia -p 8080:8080
+./build_and_run.sh <model-key>
+```
+
+Available model keys include:
+- seg-l, seg-l-seghead, seg-m, seg-m-seghead
+- pretrain-l-clip-800ft, pretrain-l-clip, pretrain-l-1280ft, pretrain-l
+- pretrain-m-1280ft, pretrain-m, pretrain-s-1280ft, pretrain-s
+- pretrain-x-cc3mlite, pretrain-x-1280ft
+
+This script will build the Docker image and run the container with the specified model configuration. The Gradio interface will be accessible at `http://localhost:8080`.
+
+You can also customize the model weights directory by setting the `MODEL_DIR` environment variable:
+
+```bash
+MODEL_DIR=/path/to/your/weights ./build_and_run.sh <model-key>
 ```
 
 #### Image Demo
