@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.0-devel-ubuntu22.04 AS DEPENDENCIES
 
 ARG MODEL="yolo_world_l_dual_vlpan_l2norm_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py"
 ARG WEIGHT="yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth"
@@ -36,17 +36,18 @@ RUN pip3 install --upgrade pip \
     && mim install mmdet==3.3.0 \
     && pip install git+https://github.com/onuralpszr/mmyolo.git
 
+FROM DEPENDENCIES as INSTALLING_YOLO
 RUN git clone --recursive https://github.com/tim-win/YOLO-World /yolo/
 #COPY . /yolo
-#WORKDIR /yolo
+WORKDIR /yolo
 
 RUN pip3 install -e .[demo]
 
 RUN pip3 install onnx onnxsim
-# RUN cd third_party/ && rm -rf ./mmyolo && git clone https://github.com/onuralpszr/mmyolo.git .
+
+FROM INSTALLING_YOLO as OK_THIS_PART_IS_TRICKY_DONT_HATE
 
 RUN mkdir /weights/
 RUN chmod a+rwx /yolo/configs/*/*
 
-CMD [ "python3", "demo/gradio_demo.py", "", ""]
-# CMD ["configs/pretrain/$MODEL", "weights/$WEIGHT"]
+CMD [ "bash" ]

@@ -5,6 +5,9 @@ MODEL_DIR="../models/models-yoloworld"
 
 declare -A models
 models["seg-l"]="yolo_world_v2_seg_l_vlpan_bn_2e-4_80e_8gpus_seghead_finetune_lvis.py yolo_world_seg_l_dual_vlpan_2e-4_80e_8gpus_allmodules_finetune_lvis-8c58c916.pth"
+models["seg-l-seghead"]="yolo_world_v2_seg_l_vlpan_bn_2e-4_80e_8gpus_seghead_finetune_lvis.py yolo_world_seg_l_dual_vlpan_2e-4_80e_8gpus_seghead_finetune_lvis-5a642d30.pth"
+models["seg-m"]="yolo_world_v2_seg_m_vlpan_bn_2e-4_80e_8gpus_seghead_finetune_lvis.py yolo_world_seg_m_dual_vlpan_2e-4_80e_8gpus_allmodules_finetune_lvis-ca465825.pth"
+models["seg-m-seghead"]="yolo_world_v2_seg_m_vlpan_bn_2e-4_80e_8gpus_seghead_finetune_lvis.py yolo_world_seg_m_dual_vlpan_2e-4_80e_8gpus_seghead_finetune_lvis-7bca59a7.pth"
 models["pretrain-l-clip-800ft"]="yolo_world_v2_l_clip_large_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_800ft_lvis_minival.py yolo_world_v2_l_clip_large_o365v1_goldg_pretrain_800ft-9df82e55.pth"
 models["pretrain-l-clip"]="yolo_world_v2_l_clip_large_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py yolo_world_v2_l_clip_large_o365v1_goldg_pretrain-8ff2e744.pth"
 models["pretrain-l-1280ft"]="yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_1280ft_lvis_minival.py yolo_world_v2_l_obj365v1_goldg_pretrain_1280ft-9babe3f6.pth"
@@ -40,9 +43,9 @@ read MODEL WEIGHT <<< "${models[$model_key]}"
 config_dir="configs/pretrain"
 demo_file=demo/gradio_demo.py
 if [[ $model_key == seg-* ]]; then
-    config_dir="configs/segmentation"
-    demo_file="demo/segmentation_demo.py"
+    export config_dir="configs/segmentation"
+    export demo_file="demo/segmentation_demo.py"
 fi
 
-docker build -f ./Dockerfile --build-arg="MODEL=$MODEL" --build-arg="WEIGHT=$WEIGHT" -t "yolo-demo:$model_key" . && \
-docker run -it -v "$MODEL_DIR:/weights/" --runtime nvidia -p 8080:8080 "yolo-demo:$model_key" bash  # python3 demo/gradio_demo.py "$config_dir/$MODEL" "/weights/$WEIGHT"
+# docker build -f ./Dockerfile --build-arg="MODEL=$MODEL" --build-arg="WEIGHT=$WEIGHT" -t "yolo-demo:latest" . && \
+docker run -it -v "$(readlink -f $MODEL_DIR):/weights/" --runtime nvidia -p 8080:8080 "yolo-demo:latest" python3 $demo_file "$config_dir/$MODEL" "/weights/$WEIGHT"
