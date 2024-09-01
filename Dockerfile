@@ -18,8 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-wheel   \
     curl
 
-RUN mkdir weights
-RUN curl -o weights/$WEIGHT -L https://huggingface.co/wondervictor/YOLO-World/resolve/main/$WEIGHT
+# Uncomment the following if you want to download a specific set of weights
+# RUN mkdir weights
+# RUN curl -o weights/$WEIGHT -L https://huggingface.co/wondervictor/YOLO-World/resolve/main/$WEIGHT
 
 RUN pip3 install --upgrade pip \
     && pip3 install wheel \
@@ -47,7 +48,5 @@ RUN pip3 install onnx onnxsim
 RUN chmod a+rwx /weights/
 RUN chmod a+rwx /yolo/configs/*/*
 
-
-
-CMD [ "python3", "demo/gradio_demo.py" ]
+CMD [ "python3", "demo/gradio_demo.py", "", ""]
 # CMD ["configs/pretrain/$MODEL", "weights/$WEIGHT"]

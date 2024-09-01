@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+MODEL_DIR="../models/models-yoloworld"
+
 declare -A models
 models["seg-l"]="yolo_world_v2_seg_l_vlpan_bn_2e-4_80e_8gpus_seghead_finetune_lvis.py yolo_world_seg_l_dual_vlpan_2e-4_80e_8gpus_allmodules_finetune_lvis-8c58c916.pth"
 models["pretrain-l-clip-800ft"]="yolo_world_v2_l_clip_large_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_800ft_lvis_minival.py yolo_world_v2_l_clip_large_o365v1_goldg_pretrain_800ft-9df82e55.pth"
@@ -36,9 +38,11 @@ fi
 read MODEL WEIGHT <<< "${models[$model_key]}"
 
 config_dir="configs/pretrain"
+demo_file=demo/gradio_demo.py
 if [[ $model_key == seg-* ]]; then
     config_dir="configs/segmentation"
+    demo_file="demo/segmentation_demo.py"
 fi
 
 docker build -f ./Dockerfile --build-arg="MODEL=$MODEL" --build-arg="WEIGHT=$WEIGHT" -t "yolo-demo:$model_key" . && \
-docker run --runtime nvidia -p 8080:8080 "yolo-demo:$model_key" python3 demo/gradio_demo.py "$config_dir/$MODEL" "/weights/$WEIGHT"
+docker run -it -v "$MODEL_DIR:/weights/" --runtime nvidia -p 8080:8080 "yolo-demo:$model_key" bash  # python3 demo/gradio_demo.py "$config_dir/$MODEL" "/weights/$WEIGHT"
