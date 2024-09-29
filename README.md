@@ -223,7 +223,7 @@ If you find YOLO-World is useful in your research or applications, please consid
 
 ```bibtex
 @inproceedings{Cheng2024YOLOWorld,
-  title     = {Yolo-world: Real-time open-vocabulary object detection},
+  title     = {YOLO-World: Real-Time Open-Vocabulary Object Detection},
   author    = {Cheng, Tianheng and Song, Lin and Ge, Yixiao and Liu, Wenyu and Wang, Xinggang and Shan, Ying},
   booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
   pages     = {16901--16911},
