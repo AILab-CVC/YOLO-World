@@ -18,7 +18,7 @@ train_batch_size_per_gpu = 8
 load_from = 'pretrained_models/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth'
 persistent_workers = False
 text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
-# text_model_name = 'openai/clip-vit-base-patch32'
+text_model_name = 'openai/clip-vit-base-patch32'
 # Polygon2Mask
 downsample_ratio = 4
 mask_overlap = False
