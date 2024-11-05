@@ -1,5 +1,7 @@
 ## Installation Guide
 
+YOLO-World is built based on `pytorch=1.11.0` and `mmcv=2.0.0`.
+
 We provide the `requirements` files in [./requirements](./../requirements/):
 
 * `basic_requirements`: training, finetuning, evaluation.
