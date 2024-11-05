@@ -251,8 +251,29 @@ class YOLOWorldImageDetector(YOLODetector):
                     data_sample.texts for data_sample in batch_data_samples
                 ]
             else:
-                print(batch_data_samples)
+                texts = None
+        if texts is not None:
             img_feats, txt_feats = self.backbone(batch_inputs, texts)
+        else:
+            if self.training:
+                if txt_feats is not None:
+                    # forward image only
+                    img_feats = self.backbone.forward_image(batch_inputs)
+                else:
+                    img_feats, txt_feats = self.backbone(batch_inputs, texts)
+            else:
+                img_feats = self.backbone.forward_image(batch_inputs)
+            if self.training:
+                sample_cls_inds, sample_bboxes = sample_random_class_bboxes(
+                    batch_data_samples['bboxes_labels'], img_feats[0].shape[0])
+                txt_feats = self.image_prompt_encoder(
+                    batch_inputs, sample_bboxes, sample_cls_inds, txt_feats,
+                    batch_data_samples['image_prompts'])
+            # projector will be forwarded outside the module
+            # else:
+            #     txt_feats = self.image_prompt_encoder.forward_projector(
+            #         self.test_embeddings)
+
         if self.with_neck:
             if self.mm_neck:
                 img_feats = self.neck(img_feats, txt_feats)
