@@ -212,7 +212,7 @@ class MultiModalYOLOBackbone(BaseModule):
     def forward(self, image: Tensor,
                 text: List[List[str]]) -> Tuple[Tuple[Tensor], Tensor]:
         img_feats = self.image_model(image)
-        if self.with_text_model:
+        if text is not None and self.with_text_model:
             txt_feats = self.text_model(text)
             return img_feats, txt_feats
         else:
