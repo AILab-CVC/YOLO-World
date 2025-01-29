@@ -175,7 +175,7 @@ def inference_with_postprocessing(ort_session,
     bboxes = bboxes.cpu().numpy()
     labels = labels.cpu().numpy()
 
-    bboxes -= np.array(
+    bboxes -= (1/2)*np.array(
         [pad_param[1], pad_param[0], pad_param[1], pad_param[0]])
     bboxes /= scale_factor
     bboxes[:, 0::2] = np.clip(bboxes[:, 0::2], 0, w)
