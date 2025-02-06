@@ -93,7 +93,7 @@ This repo contains the PyTorch implementation, pre-trained weights, and pre-trai
 </div>
 
 ### Zero-shot Evaluation Results for Pre-trained Models
-We evaluate all YOLO-World-V2.1 models on LVIS, LVIS-mini, and COCO in the zero-shot manner.
+We evaluate all YOLO-World-V2.1 models on LVIS, LVIS-mini, and COCO in the zero-shot manner, and compare with the previous version (the improvements are annotated in the superscripts).
 
 <table>
     <tr>
