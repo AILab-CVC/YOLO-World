@@ -90,6 +90,7 @@ This repo contains the PyTorch implementation, pre-trained weights, and pre-trai
 <div align="center">
 <img width=800px src="./assets/yolo_arch.png">
 </div>
+
 ## Model Zoo
 
 We've pre-trained YOLO-World-S/M/L from scratch and evaluate on the `LVIS val-1.0` and `LVIS minival`. We provide the pre-trained model weights and training logs for applications/research or re-producing the results.
