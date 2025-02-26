@@ -13,7 +13,6 @@ from transformers import CLIPTextModelWithProjection as CLIPTP
 
 @MODELS.register_module()
 class HuggingVisionBackbone(BaseModule):
-
     def __init__(self,
                  model_name: str,
                  out_indices: Sequence[int] = (0, 1, 2, 3),
@@ -58,11 +57,11 @@ class HuggingVisionBackbone(BaseModule):
 
 @MODELS.register_module()
 class HuggingCLIPLanguageBackbone(BaseModule):
-
     def __init__(self,
                  model_name: str,
                  frozen_modules: Sequence[str] = (),
                  dropout: float = 0.0,
+                 add_mask: bool = False,
                  training_use_cache: bool = False,
                  init_cfg: OptMultiConfig = None) -> None:
 
@@ -70,6 +69,7 @@ class HuggingCLIPLanguageBackbone(BaseModule):
 
         self.frozen_modules = frozen_modules
         self.training_use_cache = training_use_cache
+        self.add_mask = add_mask
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         clip_config = CLIPTextConfig.from_pretrained(model_name,
                                                      attention_dropout=dropout)
@@ -88,14 +88,29 @@ class HuggingCLIPLanguageBackbone(BaseModule):
         assert max(num_per_batch) == min(num_per_batch), (
             'number of sequences not equal in batch')
         text = list(itertools.chain(*text))
+        if self.add_mask:
+            text_mask = torch.tensor([x != self.pad_value for x in text],
+                                     requires_grad=False).to(self.model.device)
         text = self.tokenizer(text=text, return_tensors='pt', padding=True)
         text = text.to(device=self.model.device)
-        txt_outputs = self.model(**text)
+
+        if len(self.frozen_modules) > 0:
+            with torch.no_grad():
+                txt_outputs = self.model(**text)
+                txt_feats = txt_outputs.text_embeds
+        else:
+            txt_outputs = self.model(**text)
+            txt_feats = txt_outputs.text_embeds
+
         txt_feats = txt_outputs.text_embeds
         txt_feats = txt_feats / txt_feats.norm(p=2, dim=-1, keepdim=True)
         txt_feats = txt_feats.reshape(-1, num_per_batch[0],
                                       txt_feats.shape[-1])
-        return txt_feats
+        if self.add_mask:
+            text_mask = text_mask.reshape(-1, num_per_batch[0]).to(txt_feats)
+        else:
+            text_mask = None
+        return txt_feats, text_mask
 
     def _freeze_modules(self):
 
@@ -128,7 +143,6 @@ class PseudoLanguageBackbone(BaseModule):
     Args:
         text_embed_path (str): path to the text embedding file
     """
-
     def __init__(self,
                  text_embed_path: str = "",
                  test_embed_path: str = None,
@@ -176,7 +190,6 @@ class PseudoLanguageBackbone(BaseModule):
 
 @MODELS.register_module()
 class MultiModalYOLOBackbone(BaseModule):
-
     def __init__(self,
                  image_model: ConfigType,
                  text_model: ConfigType,

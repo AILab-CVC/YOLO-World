@@ -39,6 +39,7 @@ We recommend that everyone **use English to communicate on issues**, as this hel
 For business licensing and other related inquiries, don't hesitate to contact `yixiaoge@tencent.com`.
 
 ## 🔥 Updates 
+`[2025-2-8]:` We release a new YOLO-World-V2.1, which includes new pre-trained weights and training code for image prompts. Please see the update [YOLO-World-V2.1-Blog](./docs/update_20250123.md) for details.\
 `[2024-11-5]`: We update the `YOLO-World-Image` and you can try it at HuggingFace [YOLO-World-Image (Preview Version)](https://huggingface.co/spaces/wondervictor/YOLO-World-Image). It's a *preview* version and we are still improving it! Detailed documents about training and few-shot inference are coming soon.\
 `[2024-7-8]`: YOLO-World now has been integrated into [ComfyUI](https://github.com/StevenGrove/ComfyUI-YOLOWorld)! Come and try adding YOLO-World to your workflow now! You can access it at [StevenGrove/ComfyUI-YOLOWorld](https://github.com/StevenGrove/ComfyUI-YOLOWorld)!  
 `[2024-5-18]:` YOLO-World models have been [integrated with the FiftyOne computer vision toolkit](https://docs.voxel51.com/integrations/ultralytics.html#open-vocabulary-detection) for streamlined open-vocabulary inference across image and video datasets.  
@@ -90,46 +91,76 @@ This repo contains the PyTorch implementation, pre-trained weights, and pre-trai
 <div align="center">
 <img width=800px src="./assets/yolo_arch.png">
 </div>
-## Model Zoo
 
-We've pre-trained YOLO-World-S/M/L from scratch and evaluate on the `LVIS val-1.0` and `LVIS minival`. We provide the pre-trained model weights and training logs for applications/research or re-producing the results.
+### Zero-shot Evaluation Results for Pre-trained Models
+We evaluate all YOLO-World-V2.1 models on LVIS, LVIS-mini, and COCO in the zero-shot manner, and compare with the previous version (the improvements are annotated in the superscripts).
 
-### Zero-shot Inference on LVIS dataset
+<table>
+    <tr>
+        <th rowspan="2">Model</th><th rowspan="2">Resolution</th><th colspan="4" style="border-right: 1px solid">LVIS AP</th><th colspan="4">LVIS-mini</th><th colspan="4" style="border-left: 1px solid">COCO</th>
+    </tr>
+        <td>AP</td><td>AP<sub>r</sub></td><td>AP<sub>c</sub></td><td style="border-right: 1px solid">AP<sub>f</sub></td><td>AP</td><td>AP<sub>r</sub></td><td>AP<sub>c</sub></td><td>AP<sub>f</sub></td><td style="border-left: 1px solid">AP</td><td>AP<sub>50</sub></td><td>AP<sub>75</sub></td>
+    <tr style="border-top: 2px solid">
+        <td>YOLO-World-S</td><td>640</td><td>18.5<sup>+1.2</sup></td><td>12.6</td><td>15.8</td><td style="border-right: 1px solid">24.1</td><td>23.6<sup>+0.9</sup></td><td>16.4</td><td>21.5</td><td>26.6</td><td style="border-left: 1px solid">36.6</td><td>51.0</td><td>39.7</td>
+    </tr>
+    <tr>
+        <td>YOLO-World-S</td><td>1280</td><td>19.7<sup>+0.9</sup></td><td>13.5</td><td>16.3</td><td style="border-right: 1px solid">26.3</td><td>25.5<sup>+1.4</sup></td><td>19.1</td><td>22.6</td><td>29.3</td><td style="border-left: 1px solid">38.2</td><td>54.2</td><td>41.6</td>
+    </tr>
+    <tr style="border-top: 2px solid">
+        <td>YOLO-World-M</td><td>640</td><td>24.1<sup>+0.6</sup></td><td>16.9</td><td>21.1</td><td style="border-right: 1px solid">30.6</td><td>30.6<sup>+0.6</sup></td><td>19.7</td><td>29.0</td><td>34.1</td><td style="border-left: 1px solid">43.0</td><td>58.6</td><td>46.7</td>
+    </tr>
+    <tr>
+        <td>YOLO-World-M</td><td>1280</td><td>26.0<sup>+0.7</sup></td><td>19.9</td><td>22.5</td><td style="border-right: 1px solid">32.7</td><td>32.7<sup>+1.1</sup></td><td>24.4</td><td>30.2</td><td>36.4</td><td style="border-left: 1px solid">43.8</td><td>60.3</td><td>47.7</td>
+    </tr>
+    <tr style="border-top: 2px solid">
+        <td>YOLO-World-L</td><td>640</td><td>26.8<sup>+0.7</sup></td><td>19.8</td><td>23.6</td><td style="border-right: 1px solid">33.4</td><td>33.8<sup>+0.9</sup></td><td>24.5</td><td>32.3</td><td>36.8</td><td style="border-left: 1px solid">44.9</td><td>60.4</td><td>48.9</td>
+    </tr>
+    <tr>
+        <td>YOLO-World-L</td><td>800</td><td>28.3</td><td>22.5</td><td>24.4</td><td style="border-right: 1px solid">35.1</td><td>35.2</td><td>27.8</td><td>32.6</td><td>38.8</td><td style="border-left: 1px solid">47.4</td><td>63.3</td><td>51.8</td>
+    </tr>
+    <tr>
+        <td>YOLO-World-L</td><td>1280</td><td>28.7<sup>+1.1</sup></td><td>22.9</td><td>24.9</td><td style="border-right: 1px solid">35.4</td><td>35.5<sup>+1.2</sup></td><td>24.4</td><td>34.0</td><td>38.8</td><td style="border-left: 1px solid">46.0</td><td>62.5</td><td>50.0</td>
+    </tr>
+    <tr style="border-top: 2px solid">
+        <td>YOLO-World-X</td><td>640</td><td>28.6<sup>+0.2</sup></td><td>22.0</td><td>25.6</td><td style="border-right: 1px solid">34.9</td><td>35.8<sup>+0.4</sup></td><td>31.0</td><td>33.7</td><td>38.5</td><td style="border-left: 1px solid">46.7</td><td>62.5</td><td>51.0</td>
+    </tr>
+    <tr>
+        <td colspan="13">YOLO-World-X-1280 is coming soon.</td>
+    </tr>
+</table>
 
-<div><font size=2>
+### Model Card
 
-| model                                                                                                                | Pre-train Data       | Size | AP<sup>mini</su> | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> | AP<sup>val</su> | AP<sub>r</sub> | AP<sub>c</sub> | AP<sub>f</sub> |                                                                                        weights                                                                                         |
-| :------------------------------------------------------------------------------------------------------------------- | :------------------- | :----------------- | :--------------: | :------------: | :------------: | :------------: | :-------------: | :------------: | :------------: | :------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [YOLO-Worldv2-S](./configs/pretrain/yolo_world_v2_s_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 640 | 22.7 | 16.3 | 20.8 | 25.5 |  17.3 | 11.3 | 14.9 | 22.7 |[HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_s_obj365v1_goldg_pretrain-55b943ea.pth)|
-| [YOLO-Worldv2-S](./configs/pretrain/yolo_world_v2_s_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_1280ft_lvis_minival.py) | O365+GoldG | 1280&#x1F538; | 24.1 | 18.7 | 22.0 | 26.9 |  18.8 | 14.1 | 16.3 | 23.8 |[HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_s_obj365v1_goldg_pretrain_1280ft-fc4ff4f7.pth)|  
-| [YOLO-Worldv2-M](./configs/pretrain/yolo_world_v2_m_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py)  | O365+GoldG | 640 | 30.0 | 25.0  | 27.2 | 33.4 | 23.5 | 17.1 | 20.0 | 30.1 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_m_obj365v1_goldg_pretrain-c6237d5b.pth)| 
-| [YOLO-Worldv2-M](./configs/pretrain/yolo_world_v2_m_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_1280ft_lvis_minival.py) | O365+GoldG | 1280&#x1F538; | 31.6 | 24.5  | 29.0 | 35.1 | 25.3 | 19.3 | 22.0 | 31.7 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_m_obj365v1_goldg_pretrain_1280ft-77d0346d.pth)| 
-| [YOLO-Worldv2-L](./configs/pretrain/yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG | 640 | 33.0 | 22.6 | 32.0 | 35.8 | 26.0 | 18.6 | 23.0 | 32.6 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_l_obj365v1_goldg_pretrain-a82b1fe3.pth)| 
-| 🔥 [YOLO-Worldv2-L](./configs/pretrain/yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG+CCLiteV2 | 640 | 33.4 | 23.1 | 31.9 | 36.6 | 26.6 | 20.3 | 23.2 | 33.2 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/resolve/main/yolo_world_v2_l_obj365v1_goldg_cc3mv2_pretrain-2f3a4a22.pth)| 
-| [YOLO-Worldv2-L](./configs/pretrain/yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_1280ft_lvis_minival.py) | O365+GoldG | 1280&#x1F538; | 34.6 | 29.2 | 32.8 | 37.2 | 27.6 | 21.9 | 24.2 | 34.0 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_l_obj365v1_goldg_pretrain_1280ft-9babe3f6.pth)| 
-| [YOLO-Worldv2-L (CLIP-Large)](./configs/pretrain/yolo_world_v2_l_clip_large_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) 🔥  | O365+GoldG | 640 | 34.0 | 22.0 | 32.6 | 37.4 | 27.1 | 19.9 | 23.9 | 33.9 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_l_clip_large_o365v1_goldg_pretrain-8ff2e744.pth)|
-| [YOLO-Worldv2-L (CLIP-Large)](./configs/pretrain/yolo_world_v2_l_clip_large_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_800ft_lvis_minival.py) 🔥  | O365+GoldG | 800&#x1F538; | 35.5 | 28.3 | 33.2 | 38.8 | 28.6 | 22.0 | 25.1 | 35.4 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_l_clip_large_o365v1_goldg_pretrain_800ft-9df82e55.pth)|
-| [YOLO-Worldv2-L](./configs/pretrain/yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG+CC3M-Lite | 640 | 32.9 | 25.3 | 31.1 | 35.8 | 26.1 | 20.6 | 22.6 | 32.3 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_l_obj365v1_goldg_cc3mlite_pretrain-ca93cd1f.pth)|
-| [YOLO-Worldv2-X](./configs/pretrain/yolo_world_v2_x_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG+CC3M-Lite | 640 | 35.4 | 28.7 | 32.9 | 38.7 | 28.4 | 20.6 | 25.6 | 35.0 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_x_obj365v1_goldg_cc3mlite_pretrain-8698fbfa.pth) |
-| 🔥 [YOLO-Worldv2-X]() |  O365+GoldG+CC3M-Lite | 1280&#x1F538; | 37.4 | 30.5 | 35.2 | 40.7  | 29.8 | 21.1 | 26.8 | 37.0 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_x_obj365v1_goldg_cc3mlite_pretrain_1280ft-14996a36.pth) |
-| [YOLO-Worldv2-XL](./configs/pretrain/yolo_world_v2_xl_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py) | O365+GoldG+CC3M-Lite | 640 | 36.0 | 25.8 | 34.1 | 39.5 | 29.1 | 21.1 | 26.3 | 35.8 | [HF Checkpoints 🤗](https://huggingface.co/wondervictor/YOLO-World/blob/main/yolo_world_v2_xl_obj365v1_goldg_cc3mlite_pretrain-5daf1395.pth) |
+<table>
+    <tr>
+        <th>Model</th><th>Resolution</th><th>Training</th><th>Data</th><th>Model Weights</th>
+    </tr>
+    <tr style="border-top: 2px solid">
+        <td>YOLO-World-S</td><td>640</td><td>PT (100e)</td><td>O365v1+GoldG+CC-LiteV2</td><td><a href="https://huggingface.co/wondervictor/YOLO-World-V2.1/resolve/main/x_stage1-62b674ad.pth"> 🤗 HuggingFace</a></td>
+    </tr>
+    <tr>
+        <td>YOLO-World-S</td><td>1280</td><td>CPT (40e)</td><td>O365v1+GoldG+CC-LiteV2</td><td><a href="https://huggingface.co/wondervictor/YOLO-World-V2.1/resolve/main/s_stage2-4466ab94.pth"> 🤗 HuggingFace</a></td>
+    </tr>
+    <tr style="border-top: 2px solid">
+        <td>YOLO-World-M</td><td>640</td><td>PT (100e)</td><td>O365v1+GoldG+CC-LiteV2</td><td><a href="https://huggingface.co/wondervictor/YOLO-World-V2.1/resolve/main/m_stage1-7e1e5299.pth"> 🤗 HuggingFace</a></td>
+    </tr>
+    <tr>
+        <td>YOLO-World-M</td><td>1280</td><td>CPT (40e)</td><td>O365v1+GoldG+CC-LiteV2</td><td><a href="https://huggingface.co/wondervictor/YOLO-World-V2.1/resolve/main/m_stage2-9987dcb1.pth"> 🤗 HuggingFace</a></td>
+    </tr>
+    <tr style="border-top: 2px solid">
+        <td>YOLO-World-L</td><td>640</td><td>PT (100e)</td><td>O365v1+GoldG+CC-LiteV2</td><td><a href="https://huggingface.co/wondervictor/YOLO-World-V2.1/resolve/main/l_stage1-7d280586.pth"> 🤗 HuggingFace</a></td>
+    </tr>
+    <tr>
+        <td>YOLO-World-L</td><td>800 / 1280</td><td>CPT (40e)</td><td>O365v1+GoldG+CC-LiteV2</td><td><a href="https://huggingface.co/wondervictor/YOLO-World-V2.1/resolve/main/l_stage2-b3e3dc3f.pth"> 🤗 HuggingFace</a></td>
+    </tr>
+    <tr style="border-top: 2px solid">
+        <td>YOLO-World-X</td><td>640</td><td>PT (100e)</td><td>O365v1+GoldG+CC-LiteV2</td><td><a href="https://huggingface.co/wondervictor/YOLO-World-V2.1/resolve/main/x_stage1-62b674ad.pth"> 🤗 HuggingFace</a></td>
+    </tr>
+</table>
 
-</font>
-</div>
-
-**NOTE:**
-1. AP<sup>mini</sup>: evaluated on LVIS `minival`.
-3. AP<sup>val</sup>: evaluated on LVIS `val 1.0`.
-4. [HuggingFace Mirror](https://hf-mirror.com/) provides the mirror of HuggingFace, which is a choice for users who are unable to reach.
-5. &#x1F538;: fine-tuning models with the pre-trained data.
-
-**Pre-training Logs:**
-
-We provide the pre-training logs of `YOLO-World-v2`. Due to the unexpected errors of the local machines, the training might be interrupted several times.
-
-| Model | YOLO-World-v2-S | YOLO-World-v2-M  | YOLO-World-v2-L | YOLO-World-v2-X |
-| :---  | :-------------: | :--------------: | :-------------: | :-------------: |
-|Pre-training Log | [Part-1](https://drive.google.com/file/d/1oib7pKfA2h1U_5-85H_s0Nz8jWd0R-WP/view?usp=drive_link), [Part-2](https://drive.google.com/file/d/11cZ6OZy80VTvBlZy3kzLAHCxx5Iix5-n/view?usp=drive_link) | [Part-1](https://drive.google.com/file/d/1E6vYSS8kBipGc8oQnsjAfeUAx8I9yOX7/view?usp=drive_link), [Part-2](https://drive.google.com/file/d/1fbM7vt2tgSeB8o_7tUDofWvpPNSViNj5/view?usp=drive_link) | [Part-1](https://drive.google.com/file/d/1Tola1QGJZTL6nGy3SBxKuknfNfREDm8J/view?usp=drive_link), [Part-2](https://drive.google.com/file/d/1mTBXniioUb0CdctCG4ckIU6idGo0NnH8/view?usp=drive_link) |  [Final part](https://drive.google.com/file/d/1aEUA_EPQbXOrpxHTQYB6ieGXudb1PLpd/view?usp=drive_link)| 
+**Notes:**
+* PT: Pre-training, CPT: continuing pre-training
+* CC-LiteV2: the newly-annotated CC3M subset, including 250k images.
 
 
 ## Getting started

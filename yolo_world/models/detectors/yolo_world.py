@@ -11,7 +11,6 @@ from mmyolo.registry import MODELS
 @MODELS.register_module()
 class YOLOWorldDetector(YOLODetector):
     """Implementation of YOLOW Series"""
-
     def __init__(self,
                  *args,
                  mm_neck: bool = False,
@@ -27,9 +26,10 @@ class YOLOWorldDetector(YOLODetector):
              batch_data_samples: SampleList) -> Union[dict, list]:
         """Calculate losses from a batch of inputs and data samples."""
         self.bbox_head.num_classes = self.num_train_classes
-        img_feats, txt_feats = self.extract_feat(batch_inputs,
-                                                 batch_data_samples)
-        losses = self.bbox_head.loss(img_feats, txt_feats, batch_data_samples)
+        img_feats, txt_feats, txt_masks = self.extract_feat(
+            batch_inputs, batch_data_samples)
+        losses = self.bbox_head.loss(img_feats, txt_feats, txt_masks,
+                                     batch_data_samples)
         return losses
 
     def predict(self,
@@ -40,13 +40,14 @@ class YOLOWorldDetector(YOLODetector):
         processing.
         """
 
-        img_feats, txt_feats = self.extract_feat(batch_inputs,
-                                                 batch_data_samples)
+        img_feats, txt_feats, txt_masks = self.extract_feat(
+            batch_inputs, batch_data_samples)
 
         # self.bbox_head.num_classes = self.num_test_classes
         self.bbox_head.num_classes = txt_feats[0].shape[0]
         results_list = self.bbox_head.predict(img_feats,
                                               txt_feats,
+                                              txt_masks,
                                               batch_data_samples,
                                               rescale=rescale)
 
@@ -57,7 +58,7 @@ class YOLOWorldDetector(YOLODetector):
     def reparameterize(self, texts: List[List[str]]) -> None:
         # encode text embeddings into the detector
         self.texts = texts
-        self.text_feats = self.backbone.forward_text(texts)
+        self.text_feats, None = self.backbone.forward_text(texts)
 
     def _forward(
             self,
@@ -66,9 +67,9 @@ class YOLOWorldDetector(YOLODetector):
         """Network forward process. Usually includes backbone, neck and head
         forward without any post-processing.
         """
-        img_feats, txt_feats = self.extract_feat(batch_inputs,
-                                                 batch_data_samples)
-        results = self.bbox_head.forward(img_feats, txt_feats)
+        img_feats, txt_feats, txt_masks = self.extract_feat(
+            batch_inputs, batch_data_samples)
+        results = self.bbox_head.forward(img_feats, txt_feats, txt_masks)
         return results
 
     def extract_feat(
@@ -94,19 +95,19 @@ class YOLOWorldDetector(YOLODetector):
             # forward image only
             img_feats = self.backbone.forward_image(batch_inputs)
         else:
-            img_feats, txt_feats = self.backbone(batch_inputs, texts)
+            img_feats, (txt_feats,
+                        txt_masks) = self.backbone(batch_inputs, texts)
         if self.with_neck:
             if self.mm_neck:
                 img_feats = self.neck(img_feats, txt_feats)
             else:
                 img_feats = self.neck(img_feats)
-        return img_feats, txt_feats
+        return img_feats, txt_feats, txt_masks
 
 
 @MODELS.register_module()
 class SimpleYOLOWorldDetector(YOLODetector):
     """Implementation of YOLO World Series"""
-
     def __init__(self,
                  *args,
                  mm_neck: bool = False,
