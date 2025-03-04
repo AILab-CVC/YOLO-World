@@ -1,0 +1,12 @@
+torch==2.2.1
+torchvision==0.17.1
+wheel==0.43.0
+mmengine==0.10.3
+mmcv==2.1.0
+pillow==10.2.0
+opencv-python==4.9.0.80
+numpy==1.26.4
+supervision==0.18.0
+requests==2.28.2
+tqdm==4.65.0
+rich==13.4.2
